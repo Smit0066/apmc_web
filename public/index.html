@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="gu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174c3c">
+  <meta name="description" content="APMC Yard Digital Management — transparent auction tickets, weighment, sale records and yard operations.">
+  <title>APMC YardOS · Market Yard Management</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+  <svg aria-hidden="true" class="svg-defs" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.7"/><circle cx="17.5" cy="19" r="1.7"/></symbol>
+    <symbol id="i-auction" viewBox="0 0 24 24"><path d="m14 4 6 6M12 6l6 6M4 20l9-9M3 21h10M15 3l6 6"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-4 8h8L7 7Zm10 0-4 8h8l-4-8ZM8 21h8"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v16H5a2 2 0 0 1-2-2V7zM3 8h17M15 13h5M16.5 13a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1Z"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M10 17 15 12 10 7M15 12H3M13 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5M12 17h.01"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V5M4 19h17M8 16v-4M13 16V8M18 16V5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7zM17 11h.01"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </svg>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><span>અ</span></div>
+        <div><strong>YardOS</strong><small>APMC DIGITAL SYSTEM</small></div>
+        <button class="icon-btn mobile-close" id="closeSidebar" aria-label="Close menu">×</button>
+      </div>
+      <div class="yard-select"><span class="yard-dot"></span><div><small>MARKET YARD</small><strong>સુરત APMC · ડેમો</strong></div><span class="chevron">⌄</span></div>
+      <div class="nav-label">મુખ્ય વ્યવસ્થાપન</div>
+      <nav class="nav-list" id="mainNav">
+        <button class="nav-item active" data-view="dashboard"><svg><use href="#i-grid"/></svg><span>ડેશબોર્ડ</span><kbd>01</kbd></button>
+        <button class="nav-item" data-view="gate"><svg><use href="#i-truck"/></svg><span>ગેટ એન્ટ્રી / આવક</span><kbd>02</kbd></button>
+        <button class="nav-item" data-view="auction"><svg><use href="#i-auction"/></svg><span>હરાજી અને ભાવ-કાપલી</span><kbd>03</kbd><i class="nav-count">12</i></button>
+        <button class="nav-item" data-view="weighment"><svg><use href="#i-scale"/></svg><span>વજન કાંટો</span><kbd>04</kbd></button>
+        <button class="nav-item" data-view="sales"><svg><use href="#i-receipt"/></svg><span>વેચાણ બિલ</span><kbd>05</kbd></button>
+        <button class="nav-item" data-view="payments"><svg><use href="#i-wallet"/></svg><span>ચુકવણી / ખેડૂત ખાતું</span><kbd>06</kbd></button>
+        <button class="nav-item" data-view="gatepass"><svg><use href="#i-exit"/></svg><span>ગેટ પાસ / માલ રવાના</span><kbd>07</kbd></button>
+      </nav>
+      <div class="nav-label">નિયંત્રણ અને અહેવાલ</div>
+      <nav class="nav-list">
+        <button class="nav-item" data-view="disputes"><svg><use href="#i-alert"/></svg><span>ફરિયાદ / વિવાદ</span><i class="nav-count muted" id="disputeNavCount">4</i></button>
+        <button class="nav-item" data-view="reports"><svg><use href="#i-chart"/></svg><span>રિપોર્ટ્સ અને વિશ્લેષણ</span></button>
+        <button class="nav-item" data-view="audit"><svg><use href="#i-receipt"/></svg><span>ઓડિટ ટ્રેલ</span></button>
+        <button class="nav-item" data-view="settings"><svg><use href="#i-settings"/></svg><span>માસ્ટર અને સેટિંગ્સ</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="help-card"><div class="help-icon">?</div><div><strong>મદદ જોઈએ છે?</strong><small>સિસ્ટમ માર્ગદર્શન જુઓ</small></div><span>↗</span></div>
+        <div class="user-mini"><div class="avatar">PA</div><div><strong>પ્રશાસક</strong><small>Yard Administrator</small></div><button class="dots">•••</button></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="top-left"><button class="icon-btn menu-toggle" id="menuToggle" aria-label="Open menu"><svg><use href="#i-menu"/></svg></button><div class="breadcrumb">માર્કેટ યાર્ડ <span>/</span> <strong id="crumbCurrent">ડેશબોર્ડ</strong></div></div>
+        <div class="top-actions">
+          <div class="global-search"><svg><use href="#i-search"/></svg><input id="globalSearch" placeholder="ટિકિટ, ખેડૂત, વેપારી શોધો..." autocomplete="off"><kbd>⌘ K</kbd></div>
+          <button class="language-btn" id="languageToggle">GU <span>⌄</span></button>
+          <button class="icon-btn notification-btn" id="notificationBtn" aria-label="Notifications"><svg><use href="#i-bell"/></svg><i></i></button>
+          <div class="top-user" id="topUser" title="Demo role બદલો"><div class="avatar">PA</div><div><strong>પ્રશાસક</strong><small>Admin access</small></div><span>⌄</span></div>
+        </div>
+      </header>
+
+      <section class="content-wrap">
+        <div class="demo-banner"><span class="demo-pulse"></span><strong>DEMO MODE</strong><span>આ ડેમો માટેના નમૂનાના આંકડા છે. વાસ્તવિક બજારનો ડેટા નથી.</span><button id="resetDemo">ડેમો રીસેટ ↻</button></div>
+        <div id="viewRoot" aria-live="polite"></div>
+      </section>
+      <footer class="footer"><span>© 2026 YardOS · APMC Yard Digital Management</span><span>ગુજરાતી પ્રથમ · સુરક્ષિત રેકોર્ડ · Audit-ready workflow</span></footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div><div class="eyebrow" id="modalEyebrow">NEW RECORD</div><h2 id="modalTitle">નવો રેકોર્ડ</h2></div><button class="icon-btn" id="modalClose" aria-label="Close">×</button></div>
+      <div id="modalBody"></div>
+    </section>
+  </div>
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>
