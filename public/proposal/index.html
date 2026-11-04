@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="gu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>APMC YardOS - Digital Market Yard Proposal & User Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+:root{--green:#174c3c;--green2:#236b53;--mint:#eaf3ed;--ink:#1c2924;--muted:#68786e;--line:#dfe8e1;--soft:#f5f8f5;--gold:#c18a35;--goldbg:#fff6e8;--red:#ae5147}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#eef2ee;color:var(--ink);font-family:'Noto Sans Gujarati','DM Sans',sans-serif;line-height:1.55}
+a{color:var(--green2);text-decoration:none}
+.topnav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.topnav strong{font-family:'DM Sans',sans-serif;letter-spacing:.3px;color:var(--green)}
+.topnav a{border:1px solid var(--line);padding:7px 12px;border-radius:7px;font-weight:700}
+.doc{max-width:1050px;margin:24px auto;background:#fff;box-shadow:0 12px 40px #183b2812}
+.page{padding:18mm 16mm 16mm;min-height:275mm;position:relative;page-break-after:always;background:#fff}
+.page:last-child{page-break-after:auto}
+.cover{background:linear-gradient(145deg,#103d30 0%,#1c6449 55%,#dfeee3 55%,#f5f8f3 100%);color:white;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.cover:after{content:"";position:absolute;right:-75px;bottom:15px;width:300px;height:300px;border:1px solid #ffffff35;border-radius:50%;box-shadow:0 0 0 28px #ffffff0c,0 0 0 58px #ffffff0a}
+.brand{display:flex;align-items:center;gap:12px;font-family:'DM Sans',sans-serif}
+.brandmark{width:44px;height:44px;border-radius:13px;background:#ffffff20;border:1px solid #ffffff55;display:grid;place-items:center;font-size:25px;font-weight:800}
+.brand small{display:block;color:#cce2d4;font-size:9px;letter-spacing:2px}
+.cover-kicker{margin-top:48mm;color:#d4e9d9;font-size:11px;font-weight:700;letter-spacing:1.3px}
+.cover h1{font-size:36px;line-height:1.22;margin:12px 0 14px;max-width:650px;font-weight:800}
+.cover .sub{font-size:17px;color:#edf7ef;max-width:650px;line-height:1.6}
+.cover .promise{margin-top:18px;display:inline-block;padding:11px 15px;border:1px solid #ffffff55;background:#ffffff12;border-radius:10px;font-size:12px;max-width:650px}
+.cover-bottom{display:flex;justify-content:space-between;align-items:end;gap:20px;color:#e2eee5;font-size:10px;position:relative;z-index:1}
+h1,h2,h3,h4,p{margin-top:0}
+h2{font-size:24px;line-height:1.25;margin-bottom:8px;color:var(--green)}
+h3{font-size:15px;margin-bottom:6px;color:var(--green)}
+h4{font-size:12px;margin:0 0 5px}
+.lead{font-size:14px;color:#53665a;max-width:780px;margin-bottom:18px}
+.eyebrow{font:800 9px 'DM Sans',sans-serif;letter-spacing:1.5px;color:#84958a;margin-bottom:8px}
+.rule{height:3px;width:54px;background:var(--green2);border-radius:4px;margin:12px 0 20px}
+.callout{background:var(--mint);border:1px solid #dce9de;border-left:4px solid var(--green2);padding:12px 15px;border-radius:8px;color:#31533d;font-size:11px;margin:12px 0 16px}
+.warning{background:var(--goldbg);border:1px solid #f0e1c7;border-left:4px solid var(--gold);padding:12px 15px;border-radius:8px;color:#7e6336;font-size:10px;margin:12px 0}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:13px;background:#fff}
+.card .num{font:800 10px 'DM Sans',sans-serif;color:var(--green2);margin-bottom:6px}
+.card p{font-size:10px;color:#627268;margin:0}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}
+.flow .step{padding:12px 10px;border:1px solid var(--line);border-radius:9px;background:var(--soft);min-height:78px;position:relative}
+.flow b{display:block;font:800 9px 'DM Sans',sans-serif;color:var(--green2);margin-bottom:4px}
+.flow strong{font-size:11px;color:#31483a}
+.flow small{display:block;font-size:8px;color:#718075;margin-top:3px}
+.pill{display:inline-block;background:var(--mint);color:var(--green);padding:4px 8px;border-radius:30px;font-size:9px;font-weight:700;margin:2px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:9px}
+th{background:#eff5f0;color:var(--green);text-align:left;padding:9px 8px;border:1px solid var(--line)}
+td{padding:8px;border:1px solid var(--line);vertical-align:top}
+td strong{color:#263f31}
+.screen-title{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.screen-number{background:var(--green);color:#fff;border-radius:10px;min-width:38px;height:38px;display:grid;place-items:center;font:800 14px 'DM Sans',sans-serif}
+.screen-title p{margin:3px 0 0;color:var(--muted);font-size:10px}
+.shot{margin:12px 0 13px;padding:8px;background:#f5f7f4;border:1px solid var(--line);border-radius:10px}
+.shot img{display:block;width:100%;height:auto;max-height:111mm;object-fit:contain;object-position:top center;background:#fff;border-radius:5px}
+.caption{font-size:8px;color:#7a887e;margin-top:6px;text-align:right}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.guide{border:1px solid var(--line);border-radius:9px;padding:10px 11px;background:#fff;break-inside:avoid}
+.guide .tag{font:800 8px 'DM Sans',sans-serif;letter-spacing:.8px;color:var(--green2);margin-bottom:4px}
+.guide p{font-size:9px;margin:0;color:#53645a}
+.guide ul{margin:4px 0 0;padding-left:15px;font-size:9px;color:#53645a}
+.guide li{margin:2px 0}
+.benefit-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.benefit{background:var(--soft);padding:12px;border:1px solid var(--line);border-radius:9px}
+.benefit strong{display:block;font-size:11px;color:var(--green);margin-bottom:4px}
+.benefit p{font-size:9px;margin:0;color:#67766c}
+.checklist{columns:2;column-gap:28px;padding-left:18px;font-size:10px;color:#4f6257}
+.checklist li{break-inside:avoid;margin:0 0 7px}
+.footer{position:absolute;bottom:8mm;left:16mm;right:16mm;border-top:1px solid var(--line);padding-top:6px;display:flex;justify-content:space-between;color:#9aa69e;font:8px 'DM Sans',sans-serif}
+.smallprint{font-size:8px;color:#839087}
+.rolecards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.role{border:1px solid var(--line);padding:11px;border-radius:9px}
+.role strong{color:var(--green);font-size:11px;display:block}
+.role span{color:#758279;font-size:8px;display:block;margin-top:4px}
+.endline{margin-top:18px;padding:15px;border-radius:10px;background:#174c3c;color:white}
+.endline strong{font-size:14px;display:block;margin-bottom:4px}
+.endline p{font-size:10px;margin:0;color:#e1eee4}
+@media screen{
+ .page{margin:14px auto;border-bottom:1px solid #e7ece7;min-height:0}
+}
+@media print{
+ body{background:#fff}
+ .topnav{display:none}
+ .doc{margin:0;max-width:none;box-shadow:none}
+ .page{min-height:267mm;padding:14mm 13mm 14mm}
+ .cover{min-height:267mm}
+ .footer{left:13mm;right:13mm;bottom:7mm}
+ a{color:inherit}
+}
+</style>
+</head>
+<body>
+<div class="topnav"><strong>APMC YARDOS · CONCEPT PROPOSAL</strong><span>પ્રસ્તાવ અને screen-wise user guide</span><a href="https://apmc-yard-digital.hatchable.site" target="_blank">Live Demo ખોલો ↗</a></div>
+<main class="doc">
+<section class="page cover">
+  <div class="brand"><div class="brandmark">અ</div><div><strong>YARDOS</strong><small>APMC DIGITAL MARKET YARD</small></div></div>
+  <div>
+    <div class="cover-kicker">DIGITAL MARKET YARD · CONCEPT PROPOSAL</div>
+    <h1>હરાજીથી માલ રવાના થાય ત્યાં સુધી<br>દરેક વ્યવહારનો ડિજિટલ પુરાવો</h1>
+    <div class="sub">APMC માર્કેટ યાર્ડ માટે એક જ જોડાયેલું વ્યવસ્થાપન - Gate Entry, Auction Price Slip, Weighment, Sale Bill, Farmer Payment અને Dispatch.</div>
+    <div class="promise"><b>મુખ્ય વિચાર:</b> કાગળની નાની, ગુમ થઈ શકે એવી હરાજી કાપલીને બદલે serial-number ધરાવતો, શોધી શકાય એવો અને દરેક આગળની પ્રક્રિયા સાથે જોડાયેલો transaction record.</div>
+  </div>
+  <div class="cover-bottom"><span>Prepared as a concept demonstration<br>Gujarati-first interface · Responsive web preview</span><span>SCREEN-WISE GUIDE<br>11 મુખ્ય modules · 1 end-to-end workflow</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">01 · EXECUTIVE OVERVIEW</div>
+  <h2>આ સિસ્ટમ શા માટે ઉપયોગી બની શકે?</h2>
+  <div class="rule"></div>
+  <p class="lead">માર્કેટ યાર્ડમાં એક જ માલની entry, હરાજીનો ભાવ, વજન, બિલ, ચુકવણી અને gate exit અલગ-અલગ કાગળ અથવા રજિસ્ટરમાં હોય તો record શોધવો અને વિવાદ ઉકેલવો મુશ્કેલ બની શકે. YardOSનો પ્રસ્તાવ એ બધું એક Lot IDથી જોડવાનો છે.</p>
+  <div class="cards">
+    <div class="card"><div class="num">01 · ખેડૂતને પુરાવો</div><h3>ભાવ-કાપલી હવે શોધી શકાય તેવો record</h3><p>દરેક auction recordને serial number આપવો. ખેડૂત અને ખરીદદારને તેમની નકલ આપવી અને યાર્ડ પાસે central record રાખવો.</p></div>
+    <div class="card"><div class="num">02 · યાર્ડ ઓફિસને નિયંત્રણ</div><h3>એક જ transactionની આખી સ્થિતિ</h3><p>માલ આવ્યો છે, હરાજી થઈ છે, વજન થયું છે, ચુકવણી બાકી છે કે માલ રવાના થયો છે - એક જ જગ્યાએ જોઈ શકાય.</p></div>
+    <div class="card"><div class="num">03 · વિવાદમાં traceability</div><h3>Lotથી bill સુધી સીધી કડી</h3><p>ફરિયાદ વખતે ખેડૂત, પાક, buyer, ભાવ, વજન અને ચુકવણીની જોડાયેલી વિગતો શોધવાનો રસ્તો મળે.</p></div>
+    <div class="card"><div class="num">04 · મેનેજમેન્ટ માટે MIS</div><h3>રિપોર્ટ અને જવાબદારી</h3><p>Gate, auction, weighment, sales, payments, complaints અને activityના export કરી શકાય એવા records.</p></div>
+  </div>
+  <h3>એક વ્યવહારનો સંપૂર્ણ પ્રવાહ</h3>
+  <div class="flow">
+    <div class="step"><b>01 · GATE</b><strong>આવક નોંધ</strong><small>ખેડૂત + વાહન + પાક → Lot ID</small></div>
+    <div class="step"><b>02 · AUCTION</b><strong>ભાવ-કાપલી</strong><small>Buyer + ભાવ + જથ્થો → serial ticket</small></div>
+    <div class="step"><b>03 · WEIGH</b><strong>વજન</strong><small>Gross - Tare = Net</small></div>
+    <div class="step"><b>04 · BILL</b><strong>વેચાણ બિલ</strong><small>Net weight × auction rate</small></div>
+    <div class="step"><b>05 · ACCOUNTS</b><strong>ચુકવણી</strong><small>ચૂકવેલ + બાકી + reference</small></div>
+    <div class="step"><b>06 · BUYER DUES</b><strong>ખરીદદાર હિસાબ</strong><small>buyer-side dues અલગ track</small></div>
+    <div class="step"><b>07 · GATE PASS</b><strong>માલ રવાના</strong><small>ચકાસણી પછી pass</small></div>
+    <div class="step"><b>08 · AUDIT</b><strong>રેકોર્ડ / રિપોર્ટ</strong><small>Search + export + activity trail</small></div>
+  </div>
+  <div class="callout"><b>સૌથી મહત્વની બાબત:</b> આગળની screenમાં ફરીથી એ જ વિગતો વારંવાર ભરવાની જરૂર ઓછી થાય. એક વાર Lot ID બને પછી તે auction, weighment, bill, payment અને dispatch record સાથે જોડાય છે.</div>
+  <div class="footer"><span>YARDOS · APMC DIGITAL MARKET YARD</span><span>Concept proposal & guide · 02</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">02 · USER ROLES & DAILY OPERATION</div>
+  <h2>દરેક કર્મચારી પોતાનું કામ જ કરે</h2>
+  <div class="rule"></div>
+  <p class="lead">Role-based accessથી દરેક વિભાગને જરૂરી screen સુધી પહોંચ મળે અને અન્ય વિભાગોની sensitive settings અનાવશ્યક રીતે ખુલ્લી ન રહે.</p>
+  <div class="rolecards">
+    <div class="role"><strong>Administrator / પ્રશાસક</strong><span>સંપૂર્ણ overview, master settings, role control અને તમામ રેકોર્ડનું નિરીક્ષણ.</span></div>
+    <div class="role"><strong>Gate Operator / ગેટ કર્મચારી</strong><span>ખેડૂત-વાહન આવક નોંધ, Lot ID, gate pass અને vehicle exit.</span></div>
+    <div class="role"><strong>Auction Operator / હરાજી કર્મચારી</strong><span>Lot પસંદ કરવો, buyer અને ભાવ નોંધવો, ticket issue અને print.</span></div>
+    <div class="role"><strong>Weighment Operator / તોલ કર્મચારી</strong><span>Gross, tare, scale reference અને net weight નોંધવો.</span></div>
+    <div class="role"><strong>Accounts / એકાઉન્ટ્સ</strong><span>Sale bill, farmer settlement, buyer-side dues અને payment reference.</span></div>
+    <div class="role"><strong>Inspector / નિરીક્ષક</strong><span>ફરિયાદની તપાસ, resolution note અને audit records review.</span></div>
+  </div>
+  <h3>રોજિંદી કામગીરીમાં કયા પગલે શું થશે?</h3>
+  <table><thead><tr><th>તબક્કો</th><th>કર્મચારી શું કરશે?</th><th>સિસ્ટમનો અપેક્ષિત output</th></tr></thead><tbody>
+  <tr><td><strong>આવક</strong></td><td>ખેડૂત, મોબાઇલ, ગામ, પાક, બેગ અને વાહન નંબર દાખલ કરશે.</td><td>Unique Lot ID અને time-stamped gate entry.</td></tr>
+  <tr><td><strong>હરાજી</strong></td><td>Lot પસંદ કરીને buyer, quantity, quality અને final rate દાખલ કરશે.</td><td>Unique auction ticket / ભાવ-કાપલી અને print copies.</td></tr>
+  <tr><td><strong>વજન</strong></td><td>Gross અને tare નોંધશે; scale reference આપશે.</td><td>Net weight ગણતરી અને sale bill generation/update.</td></tr>
+  <tr><td><strong>હિસાબ</strong></td><td>Bill સામે ખેડૂત ચુકવણી અને buyer duesનો payment record નોંધશે.</td><td>Paid / pending status અને outstanding amount.</td></tr>
+  <tr><td><strong>રવાના</strong></td><td>યોગ્ય settlement પછી gate pass issue કરીને exit નોંધશે.</td><td>Dispatch status અને gate exit time.</td></tr>
+  </tbody></table>
+  <div class="warning"><b>Operational note:</b> આ role switch હાલ demoમાં છે. Production systemમાં અલગ user login, password/security, role permissions, approval controls અને server-side audit અમલમાં મૂકવા પડશે.</div>
+  <div class="footer"><span>YARDOS · APMC DIGITAL MARKET YARD</span><span>Roles & operation · 03</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">03 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">01</div><div><h2>Dashboard / મુખ્ય ડેશબોર્ડ</h2><p>યાર્ડની આજની કામગીરી એક નજરમાં સમજવા માટેની screen.</p></div></div>
+  <div class="shot"><img src="./screens/dashboard.png" alt="APMC YardOS Dashboard screenshot"><div class="caption">Screenshot 01 · હાલના demo previewમાંથી લીધેલો Dashboard</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>સંચાલકને અલગ-અલગ register ખોલ્યા વગર આજે કેટલા lot આવ્યા, કેટલી હરાજી થઈ, કેટલી ચુકવણી બાકી છે અને કેટલી ફરિયાદ ખુલ્લી છે તે સમજાય.</p></div>
+    <div class="guide"><div class="tag">અહીં શું દેખાય છે?</div><p>કુલ આવક, હરાજી પૂર્ણ, pending farmer payment, open complaints, daily activity chart, latest activity અને recent lots.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>માત્ર dashboard જોવો; નવી આવક માટે “નવી ગેટ એન્ટ્રી” દબાવવી અથવા quick actionsથી Auction, Weighment અને Paymentમાં જવું.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>બીજા modulesમાં record ઉમેરાય ત્યારે સંબંધિત counters અને recent activity demoમાં update થાય છે. Productionમાં આ live central data પરથી આવશે.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> દિવસ દરમિયાન ક્યાં કામ અટક્યું છે તે વહેલું દેખાય. મેનેજમેન્ટને pending કામ પર ધ્યાન કેન્દ્રિત કરવામાં મદદ મળે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Dashboard · 04</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">04 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">02</div><div><h2>Gate Entry / ગેટ એન્ટ્રી અને આવક</h2><p>ખેડૂત અને માલ યાર્ડમાં પ્રવેશે ત્યારે પ્રથમ નોંધ.</p></div></div>
+  <div class="shot"><img src="./screens/gate.png" alt="Gate Entry screen screenshot"><div class="caption">Screenshot 02 · Gate Entry register</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>યાર્ડમાં આવતાં દરેક વાહન અને માલની એક સરખી અને શોધી શકાય તેવી entry બનાવવા માટે.</p></div>
+    <div class="guide"><div class="tag">અહીં શું ભરવાનું?</div><p>ખેડૂતનું નામ, મોબાઇલ, ગામ, પાક/commodity, બેગની સંખ્યા, વાહન નંબર, અંદાજિત જથ્થો, quality/grade અને જરૂરી નોંધ.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>“નવી ગેટ એન્ટ્રી” ક્લિક કરીને વિગતો ચકાસવી અને Save કરવું. ત્યારબાદ lot registerમાં entry દેખાશે.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Unique Lot ID, arrival time અને initial status (“આવક નોંધાઈ”) બનશે. એ જ Lot ID આગળ auction અને weighmentમાં પસંદ થશે.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> વાહન, ખેડૂત કે પાકની શોધ Lot ID અથવા વિગતો પરથી કરી શકાય. એક જ માલ માટે જુદા-જુદા કાગળમાં ફરીથી ઓળખ લખવાની જરૂર ઘટે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Gate Entry · 05</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">05 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">03</div><div><h2>Auction & Digital Price Slip / હરાજી અને ભાવ-કાપલી</h2><p>આ સમગ્ર conceptનું મુખ્ય proof-of-transaction module.</p></div></div>
+  <div class="shot"><img src="./screens/auction.png" alt="Auction register screen screenshot"><div class="caption">Screenshot 03 · Auction register / price discovery</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>હરાજીમાં નક્કી થયેલો ભાવ કાગળની નાની કાપલી સુધી મર્યાદિત ન રહે; unique serialવાળા digital recordમાં સંગ્રહિત થાય.</p></div>
+    <div class="guide"><div class="tag">USERએ શું ભરવાનું?</div><p>હરાજી માટે તૈયાર Lot પસંદ કરવો, buyer, quality, quantity, final rate per quintal, auction method અને નોંધ દાખલ કરવી.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Ticket serial number બનશે, ticket સંબંધિત Lot ID અને ખેડૂત સાથે link થશે; ticket previewમાંથી print કરી શકાય.</p></div>
+    <div class="guide"><div class="tag">કઈ નકલો / પુરાવો?</div><p>Designમાં ખેડૂત, ખરીદદાર અને યાર્ડ office માટે 3 print copiesનો વિચાર છે. QR-based lookup અને cancellation/correction policy productionમાં મજબૂત રીતે અમલમાં મૂકવાની ભલામણ છે.</p></div>
+  </div>
+  <div class="callout"><b>મુખ્ય ફાયદો:</b> વિવાદ થાય ત્યારે “કાપલી કોની પાસે છે?” એ પર આધાર રાખવાને બદલે ticket number/Lot ID પરથી હરાજીનો record શોધી શકાય. આ જ આ પ્રસ્તાવનો સૌથી વધુ મૂલ્યવાન ભાગ છે.</div>
+  <div class="warning">Productionમાં ticket issue પછી સીધું overwrite ન થવું જોઈએ. ભૂલ સુધારવા reason, approval, old value/new value અને original ticket history સાથે correction/cancellation entry બનાવવી.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Auction & Price Slip · 06</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">06 · PRICE SLIP EXAMPLE</div>
+  <div class="screen-title"><div class="screen-number">03A</div><div><h2>Digital Price Slip / ભાવ-કાપલીનું preview</h2><p>હરાજી પૂરી થયા પછી operatorને મળતું print-ready ticket concept.</p></div></div>
+  <div class="shot"><img src="./screens/auction-price-slip.png" alt="Digital auction price slip preview"><div class="caption">Screenshot 03A · Demo ticket preview; sample transaction only</div></div>
+  <div class="cards">
+    <div class="card"><div class="num">TICKET IDENTIFICATION</div><h3>Unique serial number</h3><p>દરેક ticketને APMC-26 પ્રકારનો અલગ serial number આપવાનો પ્રસ્તાવ છે. આ નંબર બોલીને અથવા searchમાં નાખીને transaction શોધી શકાય.</p></div>
+    <div class="card"><div class="num">TRANSACTION DETAILS</div><h3>એક જ slipમાં જરૂરી માહિતી</h3><p>ખેડૂત, Lot ID, પાક/grade, ખરીદદાર, વેચાયેલ જથ્થો, પ્રતિ ક્વિન્ટલ ભાવ, અંદાજિત value, તારીખ અને સમય.</p></div>
+    <div class="card"><div class="num">THREE-COPY CONTROL</div><h3>ત્રણ હિતધારકો માટે નકલ</h3><p>Farmer copy, Buyer copy અને Yard copy. એક સરખો serial અને એકસરખી વિગતો; ભવિષ્યમાં duplicate print mark ઉમેરવો.</p></div>
+    <div class="card"><div class="num">QR & VERIFICATION</div><h3>સ્કેનથી record શોધવાની સુવિધા</h3><p>QRમાં ticket reference રાખીને approved userને verified record સુધી લઈ જવાનો વિકલ્પ. Public QR access અને data privacy production designમાં નક્કી કરવું.</p></div>
+  </div>
+  <div class="warning">Demoમાં QR library browser CDN પરથી load થાય છે અને sample data બતાવે છે. Real QR verification, signature/hash, official serial allocation અને duplicate-print tracking હજી production requirements છે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Digital Price Slip · 07</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">07 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">04</div><div><h2>Weighment / વજન કાંટા વ્યવસ્થાપન</h2><p>હરાજી ticketને actual gross, tare અને net weight સાથે જોડવું.</p></div></div>
+  <div class="shot"><img src="./screens/weighment.png" alt="Weighment screen screenshot"><div class="caption">Screenshot 04 · Weighment queue and records</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>હરાજીમાં થયેલા વ્યવહાર સામે વાસ્તવિક તોલનો record રાખવો અને estimated quantityના બદલે net weight પરથી bill તૈયાર કરવું.</p></div>
+    <div class="guide"><div class="tag">USERએ શું ભરવાનું?</div><p>સંબંધિત Lot પસંદ કરવો, Gross weight, Tare weight, scale/device reference, weighment slip reference અને નોંધ ભરવી.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Net weight = Gross - Tare ગણાશે. Valid net weight સેવ થાય પછી સંબંધિત sale bill create/update થશે.</p></div>
+    <div class="guide"><div class="tag">આગળ શું?</div><p>Accounts screenમાં bill number અને payable amount ઉપલબ્ધ થાય. Production versionમાં weighment operator અને scale timestamp જોડવાના.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> હરાજીનો ભાવ અને actual net weight એક જ transaction સાથે જોડાય; ખોટી quantity અથવા અલગ રેકોર્ડને કારણે થતો ગૂંચવાડો ઓછો કરી શકાય.</div>
+  <div class="warning">હાલ demoમાં વજન manually દાખલ થાય છે. Weighbridge/scale machineનું automatic data capture, calibration log, device serial verification અને network failure handling જોડવાનું બાકી છે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Weighment · 08</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">08 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">05</div><div><h2>Sales Bill / વેચાણ બિલ અને હિસાબ</h2><p>Final quantity અને approved price પરથી settlement statement.</p></div></div>
+  <div class="shot"><img src="./screens/sales.png" alt="Sales bill screen screenshot"><div class="caption">Screenshot 05 · Sale bill register</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>દરેક વેચાણનો bill number, linked Lot ID, farmer, buyer, net weight, rate અને amount એક જ જગ્યાએ રાખવા.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Weighment પૂર્ણ થાય પછી demoમાં sale bill generate/update થાય છે. Gross value = net weight × auction rate.</p></div>
+    <div class="guide"><div class="tag">USERએ શું ચકાસવાનું?</div><p>Gross amount, applicable approved seller-side deduction અને Farmer net payable તપાસવો. Buyer-side market fee/other duesને અલગ ledgerમાં રાખવા.</p></div>
+    <div class="guide"><div class="tag">આગળ શું?</div><p>Farmer settlement screenમાં bill મુજબ ચુકવણી નોંધાય. Bill detailમાં transaction reference અને balances જોઈ શકાય.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> દરેક bill પાછળ auction ticket અને verified weighmentનો linkage હોવાથી હિસાબનો આધાર શોધવો સરળ બને.</div>
+  <div class="warning">કોઈપણ કપાત, માર્કેટ ફી, દર અથવા tax/charge productionમાં લાગુ કરતાં પહેલાં વર્તમાન કાયદા, Gujarat APMC Rules, applicable notifications અને સંબંધિત APMC bye-laws પ્રમાણે અધિકૃત મંજૂરી લેવી. Demo કોઈ કાનૂની દર નક્કી કરતું નથી.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Sales Bill · 09</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">09 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">06</div><div><h2>Payments & Farmer Account / ચુકવણી અને ખેડૂત ખાતું</h2><p>Bill-wise paid amount અને બાકી રકમ track કરવા માટે.</p></div></div>
+  <div class="shot"><img src="./screens/payments.png" alt="Payments and farmer account screen"><div class="caption">Screenshot 06 · Farmer settlement register</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>ખેડૂતને કેટલી રકમ ચૂકવવાની હતી, કેટલી ચૂકવાઈ, કેટલી બાકી છે અને કયા referenceથી payment નોંધાઈ તે સ્પષ્ટ રાખવા.</p></div>
+    <div class="guide"><div class="tag">USERએ શું ભરવાનું?</div><p>Bill પસંદ કરવો, ચુકવણી રકમ, payment mode, UTR/transaction reference અને નોંધ દાખલ કરવી. Partial payment પણ record થઈ શકે.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Paid amount વધશે, outstanding ઘટશે અને balance zero થાય ત્યારે bill/lot paid statusમાં જશે.</p></div>
+    <div class="guide"><div class="tag">Buyer account અલગ કેમ?</div><p>ખરીદદારના market fee અને અન્ય duesને farmer proceedsથી અલગ track કરવાનું design છે. Authorized policy મુજબ જ accounting configure કરવું.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> ખેડૂતની ચુકવણી બાકી છે કે પૂર્ણ થઈ છે તે bill-wise દેખાય; payment proof માટે UTR/reference note રાખી શકાય.</div>
+  <div class="warning">Demo payment માત્ર નોંધ છે - તે bank, UPI, NEFT કે RTGSમાં વાસ્તવિક પૈસા transfer કરતું નથી. Live payment integration અને bank reconciliation અલગથી બનાવવાના છે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Payments · 10</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">10 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">07</div><div><h2>Gate Pass & Dispatch / ગેટ પાસ અને માલ રવાના</h2><p>Settlement અને vehicle exit વચ્ચે અંતિમ control point.</p></div></div>
+  <div class="shot"><img src="./screens/gatepass.png" alt="Gate pass and dispatch screen"><div class="caption">Screenshot 07 · Dispatch register</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>માલના વેચાણ/ચુકવણી રેકોર્ડ પછી vehicleને yardમાંથી બહાર જવાની પરવાનગીનો record રાખવો.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>Eligible Lot પસંદ કરવો, Gate Pass બનાવવો, vehicle અને transaction details ચકાસવી અને gate exit વખતે “Mark Dispatched” કરવું.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Demoમાં farmer settlement સંપૂર્ણ ન હોય તો pass અટકે છે. Buyer-side dues configure કર્યા હોય તો તે બાકી હોય ત્યારે પણ pass અટકે છે. Pass number અને exit time નોંધાય છે.</p></div>
+    <div class="guide"><div class="tag">આગળ શું?</div><p>Lotનું status “રવાના” થશે અને dispatch registerમાં દેખાશે. Productionમાં approved gate pass format, QR check અને supervisor override log જરૂરી.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> પૈસા/હિસાબની મંજૂરી અને vehicle exit વચ્ચે process control આવે; પછીથી કયા vehicleને ક્યારે pass અપાયો હતો તે શોધી શકાય.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Gate Pass & Dispatch · 11</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">11 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">08</div><div><h2>Complaints & Disputes / ફરિયાદ અને વિવાદ</h2><p>વજન, ભાવ, quality અથવા paymentની ફરિયાદને સંબંધિત transaction સાથે જોડવી.</p></div></div>
+  <div class="shot"><img src="./screens/disputes.png" alt="Complaints and disputes screen"><div class="caption">Screenshot 08 · Complaint register</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>મૌખિક ફરિયાદ કે કાગળની નોંધ ગુમ ન થાય; ફરિયાદને Complaint ID અને સંબંધિત Lot સાથે જોડવા.</p></div>
+    <div class="guide"><div class="tag">USERએ શું ભરવાનું?</div><p>ફરિયાદીનું નામ/મોબાઇલ, ફરિયાદનો પ્રકાર, Lot ID (જો હોય), વિગત અને evidenceનું reference દાખલ કરવું.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Complaint ID અને initial status બનશે; officer તપાસ પછી resolution note લખીને resolved કરી શકે.</p></div>
+    <div class="guide"><div class="tag">કઈ રીતે મદદરૂપ?</div><p>ફરિયાદના record સાથે જોડાયેલા ticket, weight, bill અને payment details તપાસી શકાય. Productionમાં evidence upload અને officer assignment ઉમેરવા.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> વિવાદનું કારણ, તપાસ, જવાબદારી અને અંતિમ resolutionનું એક ટ્રેક કરી શકાય એવું રજિસ્ટર બને.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Complaints & Disputes · 12</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">12 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">09</div><div><h2>Reports & Analytics / રિપોર્ટ્સ અને વિશ્લેષણ</h2><p>મેનેજમેન્ટ અને હિસાબ માટે structured registers અને export.</p></div></div>
+  <div class="shot"><img src="./screens/reports.png" alt="Reports and analytics screen"><div class="caption">Screenshot 09 · Reports and analytics</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>દૈનિક કામના recordsને અલગથી તૈયાર કરીને spreadsheetમાં ગોઠવ્યા વગર report અને data export સરળ બનાવવા.</p></div>
+    <div class="guide"><div class="tag">કયા reports?</div><p>Gate arrival register, auction/ticket register, weighment, sale & settlement, farmer payment, complaint અને audit trail.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>જરૂરી report પસંદ કરીને CSV export કરવો. Excel અથવા અન્ય reporting toolમાં આગળનું analysis કરી શકાય.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Demoમાં હાજર recordsમાંથી CSV file બને છે. Productionમાં date range, commodity, buyer, village અને status filters ઉમેરવા.</p></div>
+  </div>
+  <div class="callout"><b>ફાયદો:</b> દૈનિક આવક, વેચાણ, ભાવ, ચૂકવણી અને ફરિયાદોનો data એક જ systemમાં હોવાથી office reportingનું કામ સરળ બની શકે.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Reports · 13</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">13 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">10</div><div><h2>Audit Trail / ઓડિટ ટ્રેલ અને activity log</h2><p>કોણે ક્યારે કઈ નોંધ કરી તેની activity history.</p></div></div>
+  <div class="shot"><img src="./screens/audit.png" alt="Audit trail screen"><div class="caption">Screenshot 10 · Audit trail</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>મહત્વની system activityનું log રાખવું જેથી પછી તપાસ વખતે action અને reference શોધી શકાય.</p></div>
+    <div class="guide"><div class="tag">અહીં શું દેખાય છે?</div><p>સમય, user/role, action અને સંબંધિત record reference. ઉદાહરણ તરીકે gate entry, ticket issue, weighment, payment અથવા complaint resolution.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>જરૂર પડે ત્યારે history તપાસવી અને authorized accessથી CSV export કરવો.</p></div>
+    <div class="guide"><div class="tag">Productionમાં શું જરૂરી?</div><p>Server-side append-only log, role restrictions, old/new values, reason, approval, tamper-evident protection અને retention policy.</p></div>
+  </div>
+  <div class="warning"><b>ખાસ નોંધ:</b> હાલનું audit log browser-local demo history છે; તેને કાયદેસર અથવા tamper-proof audit record માનવું નહીં. Productionમાં આ moduleને સૌથી પહેલાં server-side secure બનાવવો.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Audit Trail · 14</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">14 · SCREEN-BY-SCREEN GUIDE</div>
+  <div class="screen-title"><div class="screen-number">11</div><div><h2>Master Data & Settings / માસ્ટર ડેટા અને સેટિંગ્સ</h2><p>યાર્ડ પ્રમાણે systemની મૂળભૂત configuration.</p></div></div>
+  <div class="shot"><img src="./screens/settings.png" alt="Master data and settings screen"><div class="caption">Screenshot 11 · Settings, master data and roles</div></div>
+  <div class="guide-grid">
+    <div class="guide"><div class="tag">આ SCREEN શા માટે?</div><p>યાર્ડનું અધિકૃત નામ, yard code, પાકની યાદી, ticket prefix અને user access જેવી master વિગતો નિયંત્રિત કરવા.</p></div>
+    <div class="guide"><div class="tag">અહીં શું configure થશે?</div><p>Market committee name, yard code, timezone, ticket prefix, commodity master, role access અને approved deductions.</p></div>
+    <div class="guide"><div class="tag">USERએ શું કરવાનું?</div><p>માત્ર અધિકૃત administratorએ ચકાસેલી master details update કરવી. નવી commodity ઉમેરતા પહેલાં duplicate અને applicable market list તપાસવી.</p></div>
+    <div class="guide"><div class="tag">શું AUTOMATIC થશે?</div><p>Master listમાં ઉમેરાયેલી commodity entry/auction workflowના selectionમાં દેખાશે. Productionમાં changesનું approval અને audit ફરજિયાત રાખવું.</p></div>
+  </div>
+  <div class="warning">અહીં દેખાતું Surat APMC Demo label માત્ર prototype ઓળખ માટે છે; તે Surat APMCની સત્તાવાર મંજૂરી અથવા અધિકૃત system હોવાનો દાવો નથી. Actual yard/committee વિગતો, permissions, rates અને bye-laws સંબંધિત અધિકારીઓ દ્વારા verify કરવા.</div>
+  <div class="footer"><span>YARDOS · SCREEN GUIDE</span><span>Settings · 15</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">15 · BENEFITS & PRODUCTION READINESS</div>
+  <h2>અમલમાં આવે તો કોને શું ફાયદો?</h2>
+  <div class="rule"></div>
+  <div class="benefit-row">
+    <div class="benefit"><strong>ખેડૂત</strong><p>ભાવ-કાપલીનો serial record, પોતાની વેચાણ વિગતો અને ચુકવણીનો status/reference જોવા મળવાની વ્યવસ્થા.</p></div>
+    <div class="benefit"><strong>ખરીદદાર / વેપારી</strong><p>ખરીદીનો ticket proof, weight અને bill reference તથા buyer duesનું સ્પષ્ટ account.</p></div>
+    <div class="benefit"><strong>APMC સંચાલન</strong><p>એક જ transaction chain, pending work visibility, role-wise operations અને searchable records.</p></div>
+  </div>
+  <div class="benefit-row">
+    <div class="benefit"><strong>Gate staff</strong><p>Vehicle, farmer અને lotની systematic entry; dispatchના અંતિમ control સાથે.</p></div>
+    <div class="benefit"><strong>Accounts team</strong><p>Bill-wise gross, net payable, payment reference, due balance અને buyer ledger.</p></div>
+    <div class="benefit"><strong>Inspector / Auditor</strong><p>Complaint linkage, activity history અને reports પરથી તપાસમાં મદદ.</p></div>
+  </div>
+  <h3>આજના demoથી live APMC software સુધી શું બનાવવાનું બાકી છે?</h3>
+  <ul class="checklist">
+    <li>Central database - એક userનો record બીજા userને તરત દેખાય.</li>
+    <li>Secure login, role permissions અને session management.</li>
+    <li>Server-side audit log અને approved correction/cancellation.</li>
+    <li>QR verification, unique serial policy અને duplicate print control.</li>
+    <li>Thermal/laser printer અને official slip formats.</li>
+    <li>Weighbridge/scale device integration તથા calibration controls.</li>
+    <li>Bank/UPI/NEFT integrations અને payment reconciliation.</li>
+    <li>SMS/WhatsApp receipts/notifications - approved provider સાથે.</li>
+    <li>Evidence upload, complaint assignment અને escalation.</li>
+    <li>Backup, restore, data retention, security testing અને monitoring.</li>
+    <li>Existing recordsનું migration અને reporting formats.</li>
+    <li>Official market rules, fees, bye-laws અને statutory process validation.</li>
+  </ul>
+  <div class="footer"><span>YARDOS · IMPLEMENTATION</span><span>Benefits & readiness · 16</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">16 · RECOMMENDED IMPLEMENTATION PLAN</div>
+  <h2>આગળનું કામ - સાથે મળીને યોગ્ય રીતે નક્કી કરવું</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <div class="card"><div class="num">PHASE 1 · PROCESS DISCOVERY</div><h3>અસલી યાર્ડની પ્રક્રિયા સમજવી</h3><p>Gate entryથી dispatch સુધીના existing registers, slip formats, roles, approval steps, fees, dispute process અને daily reports એકત્ર કરવા. Gate, auction, weighment અને accounts staff સાથે walkthrough કરવો.</p></div>
+    <div class="card"><div class="num">PHASE 2 · FINAL DESIGN</div><h3>APMC પ્રમાણે screen અને rules finalize</h3><p>દરેક field, mandatory step, correction control, ticket format, print copies, permission matrix, QR access, language, offline requirement અને report columns approve કરાવવા.</p></div>
+    <div class="card"><div class="num">PHASE 3 · PRODUCTION BUILD</div><h3>સાચું backend અને integrations</h3><p>Central database, secure login, APIs, audit trail, backups, printer, scale device, bank/payment, notification અને evidence storage implement કરવું.</p></div>
+    <div class="card"><div class="num">PHASE 4 · PILOT & GO-LIVE</div><h3>એક મર્યાદિત flowથી pilot શરૂ</h3><p>નક્કી કરેલા users/commodities પર test records ચલાવવા; manual register સાથે reconcile કરવું; training પછી approval લઈને staged go-live કરવું.</p></div>
+  </div>
+  <h3>Final scope નક્કી કરવા APMC પાસેથી જરૂરી માહિતી</h3>
+  <table><thead><tr><th>માહિતી</th><th>શા માટે જરૂરી?</th></tr></thead><tbody>
+  <tr><td>હાલની auction price slip અને registerના sample</td><td>Official print format, serial fields અને mandatory details નક્કી કરવા.</td></tr>
+  <tr><td>ખેડૂત, buyer, commission agent અને staff workflow</td><td>Role-wise access અને approval process design કરવા.</td></tr>
+  <tr><td>Weighbridge / scale model અને connection details</td><td>Automatic weight capture શક્યતા ચકાસવા.</td></tr>
+  <tr><td>Fees, deductions, taxes અને statutory instructions</td><td>કોઈ ખોટી ગણતરી કે અનધિકૃત કપાત ન થાય તે માટે.</td></tr>
+  <tr><td>Current reports, receipts, pass formats</td><td>Office/accounting requirements સાથે system match કરવા.</td></tr>
+  </tbody></table>
+  <div class="endline"><strong>અંતિમ હેતુ</strong><p>માત્ર કાગળને computerમાં ફેરવવો નહીં - પરંતુ ખેડૂતના માલની આવકથી લઈને ભાવ, વજન, ચુકવણી અને રવાના સુધી દરેક પગલાને એકબીજા સાથે જોડેલો, ચકાસી શકાય એવો વ્યવહાર બનાવવો.</p></div>
+  <p class="smallprint" style="margin-top:14px"><b>Important clarification:</b> આ દસ્તાવેજ હાલના clickable concept demo અને તેના દેખાતા workflows પર આધારિત છે. Demoમાં sample data browserના local storageમાં રહે છે. Central live database, actual bank transfer, scale hardware sync, WhatsApp/SMS delivery અને legally tamper-proof audit log ઉપલબ્ધ નથી. APMCની ચોક્કસ કાયદાકીય અને કામગીરીની જરૂરિયાતો સંબંધિત અધિકારીઓ દ્વારા approve થયા પછી production implementation કરવું.</p>
+  <div class="footer"><span>YARDOS · NEXT STEPS</span><span>Implementation plan · 17</span></div>
+</section>
+</main>
+</body>
+</html>
