@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="gu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#174c3c">
+<title>APMC YardOS - Download Proposal PDF</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=DM+Sans:wght@500;600;700;800&display=swap');
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f6f2;color:#1c2924;font-family:'Noto Sans Gujarati',sans-serif;padding:24px}
+.card{width:min(560px,100%);background:#fff;border:1px solid #e0e8e1;border-radius:18px;padding:30px;box-shadow:0 18px 50px #174c3c12;text-align:center}
+.mark{width:52px;height:52px;margin:0 auto 14px;border-radius:15px;background:#174c3c;color:white;display:grid;place-items:center;font-size:28px;font-weight:800}
+h1{color:#174c3c;font-size:23px;margin:0 0 8px}
+p{color:#66766b;font-size:13px;line-height:1.7;margin:0 0 20px}
+button,a.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:10px;background:#174c3c;color:white;padding:14px 18px;font:700 14px 'Noto Sans Gujarati',sans-serif;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.65;cursor:wait}
+.status{margin:13px 0 0;min-height:22px;font-size:12px;color:#718075}
+.links{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:22px;font-size:12px}
+.links a{color:#236b53;text-decoration:none;font-weight:700}
+.note{background:#f2f7f2;border:1px solid #e2ece3;padding:11px;border-radius:9px;margin-top:18px;text-align:left;font-size:11px;color:#64766a;line-height:1.7}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="mark">અ</div>
+  <h1>APMC YardOS Proposal PDF</h1>
+  <p>17 પાનાંનું updated Gujarati proposal અને screen-wise user guide. નીચેના button પર click કરતાં PDF download થશે.</p>
+  <button id="downloadBtn" type="button">⬇ PDF Download કરો</button>
+  <div class="status" id="status" aria-live="polite">ફાઇલ download માટે તૈયાર છે.</div>
+  <div class="note">Download શરૂ ન થાય તો નીચેની PDF link પર click કરીને file નવી tabમાં ખોલો. પછી browserના Download iconનો ઉપયોગ કરો.</div>
+  <div class="links">
+    <a href="/proposal/APMC-Yard-Management-Proposal.pdf" target="_blank" rel="noopener">PDF નવી tabમાં ખોલો ↗</a>
+    <a href="/proposal/" >Online document વાંચો</a>
+  </div>
+</main>
+<script>
+const button=document.getElementById('downloadBtn');
+const status=document.getElementById('status');
+button.addEventListener('click',async()=>{
+  button.disabled=true;
+  status.textContent='PDF તૈયાર થઈ રહી છે...';
+  try{
+    const response=await fetch('/proposal/APMC-Yard-Management-Proposal.pdf',{cache:'no-store'});
+    if(!response.ok) throw new Error('PDF file server તરફથી મળી નથી ('+response.status+').');
+    const source=await response.blob();
+    const pdf=new Blob([source],{type:'application/pdf'});
+    const url=URL.createObjectURL(pdf);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download='APMC-Yard-Management-Proposal.pdf';
+    link.style.display='none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    status.textContent='Download શરૂ થઈ ગયું છે. Browserના Downloads વિભાગમાં file જુઓ.';
+  }catch(error){
+    status.textContent=error.message+' PDF link નવી tabમાં ખોલીને પ્રયાસ કરો.';
+  }finally{
+    button.disabled=false;
+  }
+});
+</script>
+</body>
+</html>
