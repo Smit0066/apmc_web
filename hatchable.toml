@@ -1,0 +1,5 @@
+# Hatchable project manifest. This file marks the folder as a
+# Hatchable project and declares the services it uses.
+# Reference: https://hatchable.com/docs/developers/config
+name = "APMC Yard Digital Management"
+description = "Gujarati-first APMC yard operations prototype covering gate entry, lot tracking, transparent auction tickets, weighment, sale records, payments, gate passes, disputes and audit trails."
