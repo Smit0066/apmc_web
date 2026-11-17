@@ -95,7 +95,7 @@ const seed=()=>({
 let data;
 try{data=JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){data=seed()}
 if(!data||!Array.isArray(data.lots)||!Array.isArray(data.bills))data=seed();
-data.terms=data.terms||seed().terms;data.buyers=data.buyers||seed().buyers;data.buyerProfiles=data.buyerProfiles||seed().buyerProfiles;data.complaints=data.complaints||[];data.audit=data.audit||[];data.tickets=data.tickets||[];data.yardOptions=data.yardOptions||seed().yardOptions;
+data.terms=data.terms||seed().terms;data.deductions=data.deductions||{sellerApproved:0,buyerMarketFee:0,buyerOther:0};data.buyers=data.buyers||seed().buyers;data.buyerProfiles=data.buyerProfiles||seed().buyerProfiles;data.complaints=data.complaints||[];data.audit=data.audit||[];data.tickets=data.tickets||[];data.yardOptions=data.yardOptions||seed().yardOptions;
 let route="dashboard",returnRoute="dashboard",lotFilter="all",billFilter="all",lotSearch="",selectedLedger="farmer",activeLot=null;
 const roles=["Administrator","Gate","Auction","Weighment","Accounts","Inspector","Read-only Management"];
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){toast("આ browserમાં data save થઈ શક્યો નથી.","error")}}
@@ -170,15 +170,37 @@ function salesPage(){
 }
 function farmerPayments(){
  const paid=data.bills.reduce((s,b)=>s+(b.paid||0),0),due=data.bills.reduce((s,b)=>s+Math.max(0,b.net-(b.paid||0)),0);
- return '<div class="stats">'+stat("કુલ ચૂકવેલ",money(paid),"Farmer settlement","✓","blue")+stat("ખેડૂતનું બાકી",money(due),"Final bill balance","₹","amber")+'</div>'+
- (data.bills.length?rowsCard(data.bills.map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+' · '+esc(b.lotId)+'</span><span class="lot-name">'+esc(b.farmer)+'</span><span class="lot-meta">Payable '+money(b.net)+' · Paid '+money(b.paid||0)+' · Balance '+money(Math.max(0,b.net-(b.paid||0)))+'</span><span class="lot-meta">Due '+fmtDate(b.farmerPaymentDueAt)+' · '+remaining(b.farmerPaymentDueAt)+'</span></span>'+badge(b.net<=(b.paid||0)?"paid":"payment_pending")+'<span style="padding-left:4px">'+(b.net>(b.paid||0)?actionBtn("ચુકવો","farmer-pay",b.billNo,"primary"):actionBtn("Bill","bill-view",b.billNo))+'</span></div>').join("")):empty("Farmer bills નથી"));
+ const provisionalLots=data.lots.filter(l=>l.ticketNo&&!billFor(l.id)&&l.status!=="dispatched"&&l.sellerType!=="trader");
+ const provisional=provisionalLots.reduce((s,l)=>s+Number(l.provisional||0),0);
+ return '<div class="stats">'+stat("કુલ ચૂકવેલ",money(paid),"Farmer settlement","✓","blue")+stat("ખેડૂતનું final બાકી",money(due),"Verified bill balance","₹","amber")+stat("Provisional auction value",money(provisional),"Weighment / bill હજી બાકી","◷","blue")+'</div>'+
+ (data.bills.length?rowsCard(data.bills.map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+' · '+esc(b.lotId)+'</span><span class="lot-name">'+esc(b.farmer)+'</span><span class="lot-meta">Payable '+money(b.net)+' · Paid '+money(b.paid||0)+' · Balance '+money(Math.max(0,b.net-(b.paid||0)))+'</span><span class="lot-meta">Due '+fmtDate(b.farmerPaymentDueAt)+' · '+remaining(b.farmerPaymentDueAt)+'</span></span>'+badge(b.net<=(b.paid||0)?"paid":"payment_pending")+'<span style="padding-left:4px">'+(b.net>(b.paid||0)?actionBtn("ચુકવો","farmer-pay",b.billNo,"primary"):actionBtn("Bill","bill-view",b.billNo))+'</span></div>').join("")):empty("Farmer bills નથી"))+
+ '<div class="section-head"><h2>હરાજી થઈ · તોલ / Final Bill બાકી</h2></div>'+
+ rowsCard(provisionalLots.map(l=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(l.ticketNo)+' · '+esc(l.id)+'</span><span class="lot-name">'+esc(l.farmer)+'</span><span class="lot-meta">Provisional '+money(l.provisional||0)+' · '+esc(l.commodity)+' · '+num(l.estimated)+' Q</span></span>'+badge("auctioned")+'</div>').join("")||'<div class="empty">કોઈ provisional farmer lot નથી.</div>');
 }
 function traderLedger(){
- const groups=data.buyers.map(name=>{const bills=data.bills.filter(b=>b.buyer===name),profile=buyerProfile(name),paid=bills.reduce((s,b)=>s+(b.buyerPurchasePaid||0),0),due=bills.reduce((s,b)=>s+Math.max(0,b.gross-(b.buyerPurchasePaid||0)),0),over=bills.some(b=>b.gross>(b.buyerPurchasePaid||0)&&late(b.buyerCreditDueAt));return {name,profile,paid,due,over};});
- return '<div class="stats">'+stat("વેપારીઓ",data.buyers.length,"Trader master","♙")+stat("વસૂલવાની બાકી",money(groups.reduce((s,x)=>s+x.due,0)),"Purchase outstanding","₹","amber")+'</div>'+
- rowsCard(groups.map(x=>'<div class="lot"><span class="lot-main"><span class="lot-name">'+esc(x.name)+'</span><span class="lot-meta">'+esc(x.profile.registrationNo||"Registration ID —")+' · '+x.profile.creditDays+' credit days</span><span class="lot-meta">Received '+money(x.paid)+' · Balance '+money(x.due)+' · Limit '+money(x.profile.purchaseLimit)+'</span></span>'+badge(x.over?"payment_pending":"open")+'<span style="padding-left:4px">'+actionBtn("વ્યવહાર","trader-detail",x.name)+'</span></div>').join(""))+
- '<div class="section-head"><h2>Bill-wise વેપારી ચુકવણી</h2></div>'+
- rowsCard(data.bills.filter(b=>b.gross>(b.buyerPurchasePaid||0)).map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+'</span><span class="lot-name">'+esc(b.buyer)+'</span><span class="lot-meta">Balance '+money(b.gross-(b.buyerPurchasePaid||0))+' · Due '+fmtDate(b.buyerCreditDueAt)+'</span></span>'+actionBtn("ચુકવણી","trader-pay",b.billNo)+'</div>').join("")||'<div class="empty">કોઈ buyer payment બાકી નથી.</div>');
+ const unbilledLots=data.lots.filter(l=>l.buyer&&l.ticketNo&&!billFor(l.id)&&l.status!=="dispatched");
+ const groups=data.buyers.map(name=>{const bills=data.bills.filter(b=>b.buyer===name),active=unbilledLots.filter(l=>l.buyer===name),profile=buyerProfile(name),paid=bills.reduce((s,b)=>s+Number(b.buyerPurchasePaid||0),0),billDue=bills.reduce((s,b)=>s+Math.max(0,b.gross-(b.buyerPurchasePaid||0)),0),provisional=active.reduce((s,l)=>s+Number(l.provisional||0),0),over=bills.some(b=>b.gross>(b.buyerPurchasePaid||0)&&late(b.buyerCreditDueAt))||active.some(l=>late(l.buyerCreditDueAt));return {name,profile,paid,due:billDue+provisional,over,provisional};});
+ const purchaseBills=data.bills.filter(b=>b.gross>(b.buyerPurchasePaid||0));
+ const buyerDues=data.bills.filter(b=>Number(b.buyerTotalDue||0)>Number(b.buyerFeePaid||0));
+ return '<div class="stats">'+stat("વેપારીઓ",data.buyers.length,"Trader master","♙")+stat("વસૂલવાની બાકી",money(groups.reduce((s,x)=>s+x.due,0)),"Bill + provisional exposure","₹","amber")+'</div>'+
+ rowsCard(groups.map(x=>'<div class="lot"><span class="lot-main"><span class="lot-name">'+esc(x.name)+'</span><span class="lot-meta">'+esc(x.profile.registrationNo||"Registration ID —")+' · '+x.profile.creditDays+' credit days</span><span class="lot-meta">Received '+money(x.paid)+' · Balance '+money(x.due)+' · Limit '+money(x.profile.purchaseLimit)+(x.provisional?' · Provisional '+money(x.provisional):"")+'</span></span>'+badge(x.over?"payment_pending":"open")+'<span style="padding-left:4px">'+actionBtn("વ્યવહાર","trader-detail",x.name)+'</span></div>').join(""))+
+ '<div class="section-head"><h2>Bill-wise વેપારી ખરીદ ચુકવણી</h2></div>'+
+ rowsCard(purchaseBills.map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+'</span><span class="lot-name">'+esc(b.buyer)+'</span><span class="lot-meta">Balance '+money(b.gross-(b.buyerPurchasePaid||0))+' · Due '+fmtDate(b.buyerCreditDueAt)+'</span></span>'+actionBtn("ચુકવણી","trader-pay",b.billNo)+'</div>').join("")||'<div class="empty">કોઈ buyer purchase payment બાકી નથી.</div>')+
+ '<div class="section-head"><h2>હરાજી પૂર્ણ · Weighment / Bill બાકી</h2></div>'+
+ rowsCard(unbilledLots.map(l=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(l.ticketNo)+' · '+esc(l.id)+'</span><span class="lot-name">'+esc(l.buyer)+'</span><span class="lot-meta">Provisional purchase '+money(l.provisional||0)+' · Credit due '+fmtDate(l.buyerCreditDueAt)+'</span></span>'+badge("auctioned")+'</div>').join("")||'<div class="empty">Unbilled auction exposure નથી.</div>')+
+ '<div class="section-head"><h2>Buyer-side Market Fee / અન્ય મંજૂર Dues</h2></div>'+
+ rowsCard(buyerDues.map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+' · '+esc(b.lotId)+'</span><span class="lot-name">'+esc(b.buyer)+'</span><span class="lot-meta">Total '+money(b.buyerTotalDue)+' · Paid '+money(b.buyerFeePaid||0)+' · Balance '+money(Math.max(0,b.buyerTotalDue-(b.buyerFeePaid||0)))+'</span></span>'+actionBtn("Buyer dues નોંધો","buyer-fee-pay",b.billNo)+'</div>').join("")||'<div class="empty">હાલમાં કોઈ Buyer-side approved dues બાકી નથી. મંજૂર dues production setupમાં જ configure કરવાના.</div>');
+}
+function showTraderDetail(name){
+ const p=buyerProfile(name),bills=data.bills.filter(b=>b.buyer===name),paid=bills.reduce((s,b)=>s+Number(b.buyerPurchasePaid||0),0),due=bills.reduce((s,b)=>s+Math.max(0,b.gross-(b.buyerPurchasePaid||0)),0),feeDue=bills.reduce((s,b)=>s+Math.max(0,Number(b.buyerTotalDue||0)-Number(b.buyerFeePaid||0)),0),over=bills.filter(b=>b.gross>(b.buyerPurchasePaid||0)&&late(b.buyerCreditDueAt));
+ const body='<div class="detail"><div class="eyebrow">TRADER PROFILE</div><h3>'+esc(name)+'</h3><p>'+esc(p.registrationNo||"Registration ID not set")+'</p><div class="kv"><div><small>Credit days</small><b>'+p.creditDays+' days</b></div><div><small>Purchase limit</small><b>'+money(p.purchaseLimit)+'</b></div><div><small>Purchase received</small><b>'+money(paid)+'</b></div><div><small>Purchase outstanding</small><b>'+money(due)+'</b></div><div><small>Approved dues outstanding</small><b>'+money(feeDue)+'</b></div><div><small>Overdue bills</small><b>'+over.length+'</b></div></div></div><div class="section-head"><h2>આ વેપારીના Bills</h2></div>'+rowsCard(bills.map(b=>'<div class="lot"><span class="lot-main"><span class="lot-id">'+esc(b.billNo)+'</span><span class="lot-meta">'+esc(b.lotId)+' · '+money(b.gross)+' · Received '+money(b.buyerPurchasePaid||0)+'</span><span class="lot-meta">Credit due '+fmtDate(b.buyerCreditDueAt)+'</span></span>'+(b.gross>(b.buyerPurchasePaid||0)?actionBtn("Collection","trader-pay",b.billNo):badge("paid"))+'</div>').join("")||'<div class="empty">આ વેપારીના Bill નથી.</div>');
+ openSheet("Trader Account · "+name,body+actionBtn("Credit Policy Edit","buyer-edit",name,"primary"));
+}
+function buyerFeeForm(billNo){
+ if(!access("buyerledger"))return;
+ const b=data.bills.find(x=>x.billNo===billNo);if(!b)return;
+ const due=Math.max(0,Number(b.buyerTotalDue||0)-Number(b.buyerFeePaid||0));if(!due){toast("Buyer dues પહેલેથી ચૂકવાઈ ગયા છે.");return}
+ openSheet("Buyer-side મંજૂર dues · "+billNo,'<form id="buyerFeeForm" data-id="'+billNo+'"><div class="detail"><small>ખરીદદાર · મંજૂર dues બાકી</small><h3>'+esc(b.buyer)+' · '+money(due)+'</h3><p>Market fee / Other approved dues · Bill '+esc(billNo)+'</p></div>'+formField("પ્રાપ્ત રકમ (₹)","amount","number",String(due),true)+ '<div class="field"><label>Payment mode</label><select name="mode"><option>NEFT</option><option>RTGS</option><option>IMPS</option><option>UPI</option><option>Cash (approval required)</option></select></div>'+formField("UTR / Receipt Reference","ref","text","",true,"Collection reference")+'<button class="primary full" type="submit">Buyer dues collection સાચવો</button></form>');
 }
 function paymentsPage(){
  return heading("ચુકવણી અને ખાતાં","ખેડૂત અને વેપારીના અલગ ledgers",false)+
@@ -221,6 +243,7 @@ function settingsPage(){
  '<div class="section-head"><h2>Trader / Buyer Master</h2>'+actionBtn("＋ Add","buyer-add","")+'</div><div class="table-like">'+buyerRows+'</div>'+
  '<div class="detail"><div class="eyebrow">ROLE PREVIEW</div><p class="field-note">ફક્ત UI demo માટે role બદલો. Production login અને backend permission હજી જોડવાના બાકી છે.</p>'+actionBtn("Demo role બદલો","role-picker","")+'</div>'+
  '<div class="detail"><div class="eyebrow">COMMODITY MASTER</div><p>'+data.commodities.map(x=>'<span class="badge" style="display:inline-block;margin:2px">'+esc(x)+'</span>').join("")+'</p>'+actionBtn("Commodity ઉમેરો","commodity-add","")+'</div>'+
+ '<div class="detail"><div class="eyebrow">APPROVED FEE / DUES POLICY</div><div class="kv"><div><small>Seller-side approved deduction</small><b>'+money(data.deductions.sellerApproved||0)+'</b></div><div><small>Buyer market fee</small><b>'+money(data.deductions.buyerMarketFee||0)+'</b></div><div><small>Buyer other approved dues</small><b>'+money(data.deductions.buyerOther||0)+'</b></div></div>'+actionBtn("Approved fees configure કરો","deductions-edit","")+'</div>'+
  '<div class="notice warn">Deadline અને fee values sample settings છે. Official APMC Rules/bye-laws અને committee approval પ્રમાણે જ productionમાં લાગુ કરવી.</div>';
 }
 function morePage(){
@@ -267,6 +290,10 @@ function traderPayForm(billNo){if(!access("buyerledger"))return;const b=data.bil
 function complaintForm(){if(!access("disputes"))return;openSheet("નવી ફરિયાદ નોંધો",'<form id="complaintForm"><div class="field"><label>સંબંધિત Lot *</label><select name="lotId">'+options(data.lots.map(l=>l.id))+'</select></div><div class="field"><label>ફરિયાદનો પ્રકાર</label><select name="type"><option>વજનમાં તફાવત</option><option>હરાજી દર અંગે</option><option>ગુણવત્તા અંગે</option><option>ચુકવણી વિલંબ</option><option>માલ નિકાલ વિલંબ</option><option>બીજી ફરિયાદ</option></select></div>'+formField("ફરિયાદ કરનાર","by","text","",true)+ '<div class="field"><label>વિગત</label><textarea name="details" required placeholder="સમસ્યાની વિગત લખો"></textarea></div><button class="primary full" type="submit">ફરિયાદ નોંધો</button></form>')}
 function showComplaint(id){const c=data.complaints.find(x=>x.id===id);if(!c)return;openSheet("Complaint · "+id,'<div class="detail"><h3>'+esc(c.type)+'</h3><p>'+esc(c.by)+' · '+esc(c.lotId)+' · '+esc(c.date)+'</p><p>'+esc(c.details)+'</p>'+badge(c.status)+'</div>'+(c.status!=="resolved"?actionBtn("ફરિયાદ ઉકેલાઈ","resolve-complaint",id,"primary"):""))}
 function termsForm(){if(!access("settings"))return;openSheet("Deadline Rules",'<form id="termsForm"><div class="notice warn">આ sample settings છે. APMC-approved policy મુજબ જ actual days set કરવાના.</div>'+formField("ખેડૂત ચુકવણી દિવસો","farmerPaymentDays","number",String(data.terms.farmerPaymentDays),true)+formField("માલ નિકાલ દિવસો","dispatchDays","number",String(data.terms.dispatchDays),true)+formField("Default Trader Credit Days","defaultBuyerCreditDays","number",String(data.terms.defaultBuyerCreditDays),true)+'<button class="primary full" type="submit">Rules સાચવો</button></form>')}
+function deductionsForm(){
+ if(!access("settings"))return;
+ openSheet("Approved Fees / Dues Policy",'<form id="deductForm"><div class="notice warn">ફક્ત current Rules, APMC bye-laws અને committee approvalથી મંજૂર રકમ જ દાખલ કરવી. સામાન્ય ખેડૂત વેચાણમાં market fee buyer-side રહે છે; ખેડૂતના payableમાંથી આપમેળે કપાત ન કરવી.</div>'+formField("ખેડૂત તરફની ખાસ મંજૂર કપાત (₹ / bill)","sellerApproved","number",String(data.deductions.sellerApproved||0),true)+formField("Buyer Market Fee (₹ / bill)","buyerMarketFee","number",String(data.deductions.buyerMarketFee||0),true)+formField("Buyer Other Approved Dues (₹ / bill)","buyerOther","number",String(data.deductions.buyerOther||0),true)+'<button class="primary full" type="submit">Policy સાચવો</button></form>');
+}
 function buyerForm(name=""){if(!access("settings"))return;const p=name?buyerProfile(name):{registrationNo:"",creditDays:data.terms.defaultBuyerCreditDays,purchaseLimit:0};openSheet(name?"વેપારી Credit Policy Edit":"નવો વેપારી ઉમેરો",'<form id="buyerForm" data-old="'+esc(name)+'">'+formField("વેપારીનું નામ","name","text",name,true)+formField("APMC Registration / Licence ID","registrationNo","text",p.registrationNo,true)+formField("Credit Days","creditDays","number",String(p.creditDays),true)+formField("Purchase Limit (₹)","purchaseLimit","number",String(p.purchaseLimit),false)+'<button class="primary full" type="submit">વેપારી સાચવો</button></form>')}
 function yardPicker(){openSheet("Market Yard પસંદ કરો",data.yardOptions.map(y=>'<button class="menu-card full" style="margin-bottom:7px" data-action="select-yard" data-id="'+esc(y)+'"><span class="menu-ico">⌖</span><b>'+esc(y)+'</b><span style="margin-left:auto">›</span></button>').join(""))}
 function rolePicker(){openSheet("Demo Role પસંદ કરો",roles.map(r=>'<button class="menu-card full" style="margin-bottom:7px" data-action="select-role" data-id="'+esc(r)+'"><span class="menu-ico">♙</span><b>'+esc(r)+'</b><span style="margin-left:auto">'+(data.role===r?"✓":"›")+'</span></button>').join(""))}
@@ -274,6 +301,11 @@ function showSearch(){openSheet("Global Search",'<div class="search">⌕ <input 
 function searchResults(q){const term=q.toLowerCase();const matches=data.lots.filter(l=>[l.id,l.farmer,l.commodity,l.vehicle,l.buyer||""].join(" ").toLowerCase().includes(term));return matches.length?matches.slice(0,20).map(lotRow).join(""):empty("કોઈ record મળ્યો નથી")}
 function notifyPage(){openSheet("Notifications",'<div class="activity-row"><span class="activity-icon">◷</span><span class="activity-text"><b>'+data.lots.filter(l=>l.status==="arrived").length+' Lotની હરાજી બાકી</b><small>Gate entry પછી auction pending</small></span></div><div class="activity-row"><span class="activity-icon">₹</span><span class="activity-text"><b>ખેડૂત ચુકવણી બાકી</b><small>'+money(data.bills.reduce((s,b)=>s+Math.max(0,b.net-(b.paid||0)),0))+' · Farmer ledger</small></span></div><div class="activity-row"><span class="activity-icon">!</span><span class="activity-text"><b>'+data.complaints.filter(c=>c.status!=="resolved").length+' ખુલ્લી ફરિયાદ</b><small>તપાસ માટે બાકી</small></span></div>')}
 function detailLot(id){const l=data.lots.find(x=>x.id===id);if(!l)return;activeLot=id;openSheet("Lot Details · "+id,'<div class="detail"><div class="detail-top"><div><h3>'+esc(l.farmer)+'</h3><p>'+esc(l.village)+' · '+(l.sellerType==="trader"?"વેપારી":"ખેડૂત")+'</p></div>'+badge(l.status)+'</div><div class="kv"><div><small>Lot ID</small><b>'+esc(l.id)+'</b></div><div><small>પાક</small><b>'+esc(l.commodity)+'</b></div><div><small>બેગ</small><b>'+l.bags+'</b></div><div><small>વાહન</small><b>'+esc(l.vehicle)+'</b></div><div><small>Farmer / Trader ID</small><b>'+esc(l.sellerType==="trader"?l.traderRegistrationNo:l.farmerRegistryId||"—")+'</b></div><div><small>Land Record</small><b>'+esc((l.landRecordType||"")+" "+(l.landRecordNo||""))+'</b></div><div><small>Ticket</small><b>'+esc(l.ticketNo||"—")+'</b></div><div><small>Buyer</small><b>'+esc(l.buyer||"—")+'</b></div><div><small>Farmer due</small><b>'+fmtDate(l.farmerPaymentDueAt)+'</b></div><div><small>Dispatch due</small><b>'+fmtDate(l.dispatchDueAt)+'</b></div></div></div>'+actions([actionBtn("Edit / Gate Details","edit-lot",id),l.ticketNo?actionBtn("ભાવ-કાપલી","ticket-by-lot",id):"",l.status==="arrived"?actionBtn("હરાજી","auction-lot",id,"primary"):""]) )}
+function editLotForm(id){
+ if(!access("gate"))return;const l=data.lots.find(x=>x.id===id);if(!l)return;
+ const identityFields=l.sellerType==="trader"?formField("APMC Trader Registration / Licence ID","traderRegistrationNo","text",l.traderRegistrationNo||"",true):formField("Farmer Registry ID","farmerRegistryId","text",l.farmerRegistryId||"",false);
+ openSheet("Lot Details સુધારો · "+id,'<form id="lotEditForm" data-id="'+id+'"><div class="notice warn">Lot ID અને અગાઉની transaction history બદલાશે નહીં. Correction audit trailમાં નોંધાશે.</div>'+formField("વેચનારનું નામ","farmer","text",l.farmer,true)+formField("Mobile","mobile","tel",l.mobile||"",true)+formField("Village","village","text",l.village||"",true)+formField("Vehicle number","vehicle","text",l.vehicle||"",true)+'<div class="two">'+formField("Bags","bags","number",String(l.bags),true)+formField("Estimated weight (Q)","estimated","number",String(l.estimated||0),false)+'</div>'+identityFields+formField("Land Record number","landRecordNo","text",l.landRecordNo||"",false)+'<button class="primary full" type="submit">Lot correction સાચવો</button></form>');
+}
 function createPass(id){
  if(!access("gatepass"))return;const l=data.lots.find(x=>x.id===id),b=billFor(id);if(!l)return;
  if(!b){toast("પહેલા verified weighment અને Sale Bill બનાવો.","error");return}
@@ -287,6 +319,12 @@ function dispatchLot(id){const l=data.lots.find(x=>x.id===id);if(!l||!l.passNo)r
 function exportCsv(type){let rows=[],name=type;const csvCell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';if(type==="lots")rows=[["Lot ID","Seller","Seller Type","Commodity","Bags","Vehicle","Status"],...data.lots.map(l=>[l.id,l.farmer,l.sellerType,l.commodity,l.bags,l.vehicle,statusText(l.status)])];if(type==="tickets")rows=[["Ticket","Lot","Seller","Buyer","Quantity Q","Rate"],...data.tickets.map(t=>[t.ticketNo,t.lotId,t.farmer,t.buyer,t.quantity,t.rate])];if(type==="bills")rows=[["Bill","Lot","Farmer","Buyer","Gross","Net","Paid","Balance"],...data.bills.map(b=>[b.billNo,b.lotId,b.farmer,b.buyer,b.gross,b.net,b.paid||0,Math.max(0,b.net-(b.paid||0))])];if(type==="audit")rows=[["Time","Actor","Action","Reference"],...data.audit.map(a=>[a.time,a.actor,a.action,a.ref])];if(type==="complaints")rows=[["ID","Lot","Type","By","Status"],...data.complaints.map(c=>[c.id,c.lotId,c.type,c.by,c.status])];const content="\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");const blob=new Blob([content],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="yardos-"+name+"-"+Date.now()+".csv";a.click();URL.revokeObjectURL(url);toast("CSV રિપોર્ટ તૈયાર થયો.")}
 function handleForm(e){
  e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f).entries());
+ if(f.id==="lotEditForm"){
+  const l=data.lots.find(x=>x.id===f.dataset.id);if(!l)return;
+  l.farmer=v.farmer.trim();l.mobile=v.mobile.trim();l.village=v.village.trim();l.vehicle=v.vehicle.toUpperCase();l.bags=Number(v.bags);l.estimated=Number(v.estimated||0);
+  if(l.sellerType==="trader")l.traderRegistrationNo=v.traderRegistrationNo.trim();else l.farmerRegistryId=v.farmerRegistryId.trim();
+  l.landRecordNo=v.landRecordNo.trim();addAudit("Lot details correction નોંધાઈ",l.id);persist();closeSheet();detailLot(l.id);toast("Lot details update થયા");return;
+ }
  if(f.id==="entryForm"){
   if(v.sellerType==="trader"&&!v.traderRegistrationNo.trim()){toast("વેપારી માટે Registration ID જરૂરી છે.","error");return}
   const id="LOT-26-"+String(data.nextLot++).padStart(5,"0"),l={id,farmer:v.farmer.trim(),mobile:v.mobile.trim(),state:v.state,district:v.district,taluka:v.taluka,village:v.village,commodity:v.commodity,bags:Number(v.bags),vehicle:v.vehicle.toUpperCase(),arrival:now().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}),arrivalAt:now().toISOString(),status:"arrived",quality:v.quality,estimated:Number(v.estimated||0),sellerType:v.sellerType,farmerRegistryId:v.farmerRegistryId||"",landRecordType:v.landRecordType||"",landRecordNo:v.landRecordNo||"",traderRegistrationNo:v.traderRegistrationNo||""};
@@ -303,7 +341,7 @@ function handleForm(e){
  if(f.id==="weighForm"){
   const l=data.lots.find(x=>x.id===f.dataset.id),gross=Number(v.gross),tare=Number(v.tare),net=gross-tare;if(!l||gross<=0||tare<0||net<=0){toast("Gross/Tare weight તપાસો.","error");return}
   l.grossWeight=gross;l.tareWeight=tare;l.net=Number(net.toFixed(3));l.scaleRef=v.scaleRef;l.status="weighed";const t=ticketFor(l.id),rate=Number(l.rate||t?.rate||0),grossAmount=Number((net*rate).toFixed(2));let b=billFor(l.id);
-  if(!b){b={billNo:"SB-26-"+String(data.nextBill++).padStart(5,"0"),lotId:l.id,farmer:l.farmer,buyer:l.buyer,weight:l.net,rate,gross:grossAmount,deductions:0,net:grossAmount,paid:0,buyerPurchasePaid:0,status:"payment_pending",farmerPaymentDueAt:t?.farmerPaymentDueAt||l.farmerPaymentDueAt,dispatchDueAt:t?.dispatchDueAt||l.dispatchDueAt,buyerCreditDueAt:t?.buyerCreditDueAt||l.buyerCreditDueAt};data.bills.unshift(b);l.billNo=b.billNo}else{b.weight=l.net;b.gross=grossAmount;b.net=Math.max(0,grossAmount-Number(b.deductions||0))}
+  if(!b){const sellerDeduction=Number(data.deductions.sellerApproved||0),buyerMarketFee=Number(data.deductions.buyerMarketFee||0),buyerOther=Number(data.deductions.buyerOther||0);b={billNo:"SB-26-"+String(data.nextBill++).padStart(5,"0"),lotId:l.id,farmer:l.farmer,buyer:l.buyer,weight:l.net,rate,gross:grossAmount,deductions:sellerDeduction,sellerDeductions:sellerDeduction,net:Math.max(0,grossAmount-sellerDeduction),paid:0,buyerPurchasePaid:0,buyerMarketFee,buyerOther,buyerTotalDue:buyerMarketFee+buyerOther,buyerFeePaid:0,buyerFeeStatus:(buyerMarketFee+buyerOther)>0?"payment_pending":"paid",status:"payment_pending",farmerPaymentDueAt:t?.farmerPaymentDueAt||l.farmerPaymentDueAt,dispatchDueAt:t?.dispatchDueAt||l.dispatchDueAt,buyerCreditDueAt:t?.buyerCreditDueAt||l.buyerCreditDueAt};data.bills.unshift(b);l.billNo=b.billNo}else{b.weight=l.net;b.gross=grossAmount;b.net=Math.max(0,grossAmount-Number(b.deductions||0))}
   addAudit("Gross / Tare / Net weight નોંધ્યું",l.id);addAudit("Sale bill જનરેટ કર્યું",l.billNo);persist();closeSheet();navigate("sales");toast("Weighment complete · "+l.billNo);return;
  }
  if(f.id==="farmerPayForm"){
@@ -314,11 +352,21 @@ function handleForm(e){
   const b=data.bills.find(x=>x.billNo===f.dataset.id),amt=Number(v.amount),balance=b?b.gross-(b.buyerPurchasePaid||0):0;if(!b||amt<=0||amt>balance+.001||!v.ref.trim()){toast("Trader collection amount / reference તપાસો.","error");return}
   b.buyerPurchasePaid=Number(((b.buyerPurchasePaid||0)+amt).toFixed(2));b.buyerPurchaseRef=v.ref;b.buyerPurchaseMode=v.mode;addAudit("વેપારી ખરીદ ચુકવણી નોંધાઈ · "+money(amt),b.billNo);persist();closeSheet();navigate("payments");selectedLedger="trader";page();toast("Trader collection record થઈ");return;
  }
+ if(f.id==="buyerFeeForm"){
+  const b=data.bills.find(x=>x.billNo===f.dataset.id),amt=Number(v.amount),balance=b?Number(b.buyerTotalDue||0)-Number(b.buyerFeePaid||0):0;
+  if(!b||amt<=0||amt>balance+.001||!v.ref.trim()){toast("Buyer dues amount / reference તપાસો.","error");return}
+  b.buyerFeePaid=Number(((b.buyerFeePaid||0)+amt).toFixed(2));b.buyerFeeRef=v.ref;b.buyerFeeMode=v.mode;b.buyerFeeStatus=b.buyerFeePaid>=Number(b.buyerTotalDue||0)-.01?"paid":"payment_pending";
+  addAudit("Buyer-side approved dues collection નોંધાઈ · "+money(amt),b.billNo);persist();closeSheet();navigate("payments");selectedLedger="trader";page();toast("Buyer-side dues collection record થઈ");return;
+ }
  if(f.id==="complaintForm"){
   const c={id:"CMP-26-"+String(data.nextComplaint++).padStart(5,"0"),lotId:v.lotId,type:v.type,by:v.by,details:v.details,status:"open",date:today()};data.complaints.unshift(c);addAudit("નવી ફરિયાદ નોંધાઈ",c.id);persist();closeSheet();navigate("disputes");toast("ફરિયાદ નોંધાઈ · "+c.id);return;
  }
  if(f.id==="termsForm"){
   data.terms={farmerPaymentDays:Number(v.farmerPaymentDays),dispatchDays:Number(v.dispatchDays),defaultBuyerCreditDays:Number(v.defaultBuyerCreditDays)};addAudit("Deadline policy update થઈ","SETTINGS");persist();closeSheet();page();toast("Deadline rules સાચવાયા");return;
+ }
+ if(f.id==="deductForm"){
+  data.deductions={sellerApproved:Number(v.sellerApproved||0),buyerMarketFee:Number(v.buyerMarketFee||0),buyerOther:Number(v.buyerOther||0)};
+  addAudit("Approved fee / dues policy update થઈ","SETTINGS");persist();closeSheet();page();toast("Fee / Dues policy સાચવાઈ. નવા bills પર લાગુ થશે.");return;
  }
  if(f.id==="buyerForm"){
   const old=f.dataset.old||"",name=v.name.trim();if(!name||!v.registrationNo.trim()){toast("વેપારીનું નામ અને registration જરૂરી છે.","error");return}
@@ -342,12 +390,15 @@ function act(name,id){
  if(name==="bill-view"){billDetail(id);return}
  if(name==="farmer-pay"){farmerPayForm(id);return}
  if(name==="trader-pay"){traderPayForm(id);return}
+ if(name==="buyer-fee-pay"){buyerFeeForm(id);return}
+ if(name==="trader-detail"){showTraderDetail(id);return}
  if(name==="complaint-add"){complaintForm();return}
  if(name==="complaint-view"){showComplaint(id);return}
  if(name==="resolve-complaint"){if(c){c.status="resolved";addAudit("ફરિયાદ ઉકેલાઈ",id);persist();closeSheet();navigate("disputes");toast("ફરિયાદ resolved થઈ")}return}
  if(name==="create-pass"){createPass(id);return}
  if(name==="dispatch"){dispatchLot(id);return}
  if(name==="edit-terms"){termsForm();return}
+ if(name==="deductions-edit"){deductionsForm();return}
  if(name==="edit-buyer"){buyerForm(id);return}
  if(name==="buyer-add"){buyerForm();return}
  if(name==="yard-picker"){yardPicker();return}
@@ -370,7 +421,7 @@ function act(name,id){
  if(name==="global-search-focus"){showSearch();return}
  if(name==="export-lots"){exportCsv("lots");return}
  if(name==="buyer-detail"){navigate("buyerledger");return}
- if(name==="edit-lot"&&l){toast("આ prototypeમાં Lot ID immutable છે; correction માટે supervisor workflow productionમાં ઉમેરાશે.");return}
+ if(name==="edit-lot"&&l){editLotForm(id);return}
 }
 document.addEventListener("click",e=>{
  const b=e.target.closest("button");if(!b)return;
@@ -386,7 +437,7 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
  if(e.target.id==="sellerType"){const trader=e.target.value==="trader";$("#farmerFields").classList.toggle("hide",trader);$("#traderFields").classList.toggle("hide",!trader);const tr=$("#traderFields input");if(tr)tr.required=trader}
 });
-document.addEventListener("submit",e=>{const f=e.target;if(f.matches("form[id]")&&["entryForm","auctionForm","weighForm","farmerPayForm","traderPayForm","complaintForm","termsForm","buyerForm","commodityForm"].includes(f.id))handleForm(e)});
+document.addEventListener("submit",e=>{const f=e.target;if(f.matches("form[id]")&&["entryForm","lotEditForm","auctionForm","weighForm","farmerPayForm","traderPayForm","buyerFeeForm","complaintForm","termsForm","deductForm","buyerForm","commodityForm"].includes(f.id))handleForm(e)});
 document.addEventListener("click",e=>{if(e.target.id==="modal")closeSheet()});
 $("#bottomNav").addEventListener("click",()=>{});page();persist();
 })();
