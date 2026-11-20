@@ -1,31 +1,55 @@
-# APMC Yard Digital — MERN migration starter
+# APMC Yard Digital — MERN workspace
 
-This is the first MERN migration foundation for APMC Yard Digital. The existing legacy website remains untouched in the repository root.
+The previous HTML/CSS/JavaScript demo remains in the repository root. This folder contains the MERN migration workspace.
 
 ## Stack
 - React + Vite frontend
-- Node.js + Express API
-- MongoDB + Mongoose models
-- JWT authentication foundation
-- Role-based authorization middleware
+- Express + Node.js API
+- MongoDB + Mongoose
+- JWT session authentication, bcrypt password hashing, and role-based API access
 
 ## Run locally
-Requirements: Node.js 20+ and MongoDB.
+Requirements: Node.js 20+ and MongoDB Atlas (recommended) or a MongoDB replica set.
 
-1. Copy `.env.example` to `server/.env`.
-2. Set `MONGODB_URI`, `JWT_SECRET` and `CLIENT_ORIGIN`.
-3. From `mern/`, run `npm install`.
-4. Run `npm run dev`.
-5. Open http://localhost:5173.
+1. Copy `.env.example` to `server/.env` and fill in database credentials, a long random JWT secret, and the first admin details.
+2. From `mern/`, run `npm install`.
+3. Create the first administrator once: `npm run seed:admin -w server`.
+4. Remove `ADMIN_PASSWORD` from the environment file after provisioning (never commit `.env`).
+5. Run `npm run dev`.
+6. Frontend: http://localhost:5173. API health: http://localhost:5000/api/health.
 
-## API foundation
-- GET /api/health
-- POST /api/auth/login
-- GET /api/auth/me
-- GET/POST /api/lots
-- GET/POST /api/gate-entries
+## Roles
+- admin: all modules, staff administration, configuration and approval overrides
+- gate: gate entry, gate pass and physical dispatch
+- auction: auction ticket issue / cancellation is admin-only
+- weighment: weighbridge readings
+- accounts: sale settlement, payments, buyers and credit
+- inspector: complaints and audit review
+
+## Implemented API foundation
+- Authentication: `POST /api/auth/login`, `GET /api/auth/me`
+- Dashboard: `GET /api/yard/overview`
+- Gate / lots: `GET/POST /api/yard/lots`, `GET /api/yard/lots/:id`
+- Buyers / credit: `GET/POST /api/yard/buyers`, `PATCH /api/yard/buyers/:id`
+- Auction: `GET/POST /api/yard/tickets`, admin ticket void with reason
+- Weighment and automatic sale bill: `GET/POST /api/yard/weighments`
+- Bills and separate payment ledgers: `GET /api/yard/bills`, `GET/POST /api/yard/payments`
+- Dispatch: `GET /api/yard/gate-passes`, issue and confirm dispatch endpoints
+- Complaints: `GET/POST /api/yard/complaints`, status and resolution update
+- Reports, settings, user administration and append-only audit log
+
+## Important operational controls
+- Auction ticket and serial references are generated server-side.
+- Trader credit days, purchase exposure and overdue checks are applied before auction issue.
+- Gross/tare/net are validated; weighment corrections require admin role, reason, and no prior settlement.
+- Farmer settlements, trader purchase collections, and buyer-side dues are recorded in separate ledgers.
+- Gate pass requires full farmer settlement and settled buyer-side dues. Dispatch deadline overrides require admin approval and a reason.
+- Audit events are written server-side. Do not expose audit logs to non-admin/non-inspector roles.
+- Payment entries only record a verified external transaction reference. This app does not itself transfer money.
+- Weighbridge hardware, official e-auction, statutory permit, SMS/WhatsApp, bank APIs, legal rules, and production backups need real provider/committee credentials and operational verification.
+
+## Deployment note
+Multi-document operations use MongoDB transactions; use MongoDB Atlas or another replica-set deployment. Do not use a standalone MongoDB server for production. Configure HTTPS, backups, monitoring, secrets, data retention, and an approved APMC legal/accounting policy before live operation.
 
 ## Migration status
-This is a scaffold, not a finished migration. Existing HTML/CSS/JS workflows are not yet fully ported. Auction, weighment, sales, farmer payments, trader ledger, buyer dues, disputes, reports, audit trail and mobile flows still need migration and end-to-end validation.
-
-Do not commit real credentials. Provision the first administrator through a secure one-time process before production use.
+This is an actively built migration workspace, not yet a certified production release. Every workflow must be tested against the APMC's actual forms, approved bye-laws, fee rules, statutory processes, and hardware. The source of truth for current workflows is being migrated from the legacy demo; demo records are not imported automatically.
