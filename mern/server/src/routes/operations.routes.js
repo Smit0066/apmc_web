@@ -139,20 +139,9 @@ router.get('/buyers', async (req, res, next) => {
     const filter = {};
     const { page, limit } = cleanPage(req);
     if (req.query.active !== undefined) filter.active = req.query.active === 'true';
-    if (req.query.search) filter.name = { $regex: String(req.query.search).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\router.get('/buyers', async (req, res, next) => {
-  try {
-    const filter = {};
-    if (req.query.active !== undefined) filter.active = req.query.active === 'true';
-    if (req.query.search) filter.name = { $regex: String(req.query.search).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-    const items = await Buyer.find(filter).sort({ name: 1 }).lean();
-    const bills = await SaleBill.aggregate([{ $match: { status: { $ne: 'cancelled' } } }, { $group: {
-      _id: '$buyer', gross: { $sum: '$grossAmount' }, paid: { $sum: '$buyerPurchasePaid' },
-      dueFees: { $sum: { $subtract: [{ $add: ['$buyerMarketFee','$buyerOtherDues'] }, '$buyerDuesPaid'] } }
-    } }]);
-    const balances = new Map(bills.map(x => [String(x._id), x]));
-    res.json({ items: items.map(x => ({ ...x, ledger: balances.get(String(x._id)) || { gross: 0, paid: 0, dueFees: 0 } })) });
-  } catch (error) { next(error); }
-});'), $options: 'i' };
+    const searchTerm = String(req.query.search || '').trim().slice(0, 80);
+    const safeSearch = Array.from(searchTerm).filter(ch => { const cp = ch.codePointAt(0); return /[A-Za-z0-9 _-]/.test(ch) || (cp >= 0x0A80 && cp <= 0x0AFF); }).join('');
+    if (safeSearch) filter.name = { $regex: safeSearch, $options: 'i' };
     const [items, total] = await Promise.all([
       Buyer.find(filter).sort({ name: 1 }).skip((page - 1) * limit).limit(limit).lean(),
       Buyer.countDocuments(filter)
