@@ -95,7 +95,8 @@ const labelFor = value => ({
   part_paid:'આંશિક ચુકવણી',paid:'ચુકવણી પૂર્ણ',dispatched:'માલ રવાના',held:'Hold',
   open:'ખુલ્લી',investigating:'તપાસમાં',resolved:'ઉકેલાઈ',rejected:'નામંજૂર',
   farmer_settlement:'ખેડૂત ચુકવણી',buyer_purchase:'વેપારી ખરીદ',buyer_fee:'Buyer dues',
-  open_outcry:'જાહેર હરાજી',e_auction:'e-Auction',approved_negotiated:'મંજૂર Negotiated'
+  open_outcry:'જાહેર હરાજી',e_auction:'e-Auction',approved_negotiated:'મંજૂર Negotiated',
+  admin:'Administrator',gate:'Gate Operator',auction:'Auction Operator',weighment:'Weighment Operator',accounts:'Accounts Officer',inspector:'Inspector'
 }[value] || String(value ?? '—'));
 const getPath = (obj,path) => path.split('.').reduce((v,k)=>v?.[k],obj);
 const textValue = (value,key) => {
@@ -386,11 +387,11 @@ function ModuleScreen({page,user,notify}) {
     {page==='payments'&&<div className="notice-panel"><Wallet size={17}/> Payment entry actual money transfer કરતી નથી. UTR / external transaction reference verify કર્યા પછી જ receipt નોંધો.</div>}
     {page==='gatepass'&&<div className="notice-panel"><Truck size={17}/> Statutory transit permit અલગ requirement હોઈ શકે છે. આ module yard exit control record આપે છે; APMC-approved permit processનું replacement નથી.</div>}
     {formOpen&&<FormDialog title={editRow?(page==='users'?'Staff role / access સુધારો':'વેપારી credit policy સુધારો'):cfg.createLabel} fields={fields} initialValues={editRow||{}} onClose={()=>{setFormOpen(false);setEditRow(null)}} onSubmit={create} busy={busy} submitLabel="સાચવો"/>}
-    {detail&&<DetailModal detail={detail} onClose={()=>setDetail(null)}/>}
+    {detail&&<DetailModal detail={detail} user={user} onClose={()=>setDetail(null)} onVoidTicket={async(ticket,reason)=>{await api('/yard/tickets/'+ticket._id+'/void',{method:'POST',body:{reason}});notify('Auction ticket cancel થઈ. Lot ફરી auction queue માં ઉપલબ્ધ છે.');setDetail(null);await load();}}/>}
   </div>;
 }
 
-function DetailModal({detail,onClose}) {
+function DetailModal({detail,onClose,user,onVoidTicket}) {
   const {kind,data}=detail;
   let title='Transaction detail';
   if(kind==='lot')title='Lot traceability · '+data.item.lotNumber;
@@ -418,7 +419,7 @@ function DetailModal({detail,onClose}) {
   ];
   return <Modal title={title} onClose={onClose} wide><div className="detail-grid">{rows.filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=><div className="detail-cell" key={k}><small>{k}</small><b>{v}</b></div>)}</div>
     {kind==='lot'&&<><h3 className="subsection-title">Transaction Timeline</h3><div className="timeline-list">{[['Gate entry',true],['Auction ticket',!!data.ticket],['Weighment',!!data.weighments?.length],['Sale bill',!!data.bill],['Farmer settlement',data.bill?.status==='paid'],['Gate pass',!!data.pass],['Dispatch',data.pass?.status==='dispatched']].map(([name,done])=><div key={name}><span className={done?'timeline-dot done':'timeline-dot'}/><b>{name}</b><small>{done?'Completed':'Pending'}</small></div>)}</div></>}
-    <div className="form-actions"><button className="btn ghost" onClick={onClose}>Close</button><button className="btn primary" onClick={()=>window.print()}><Printer size={15}/> Print</button></div>
+    <div className="form-actions">{kind==='ticket'&&user?.role==='admin'&&<button className="btn danger" onClick={async()=>{const reason=window.prompt('Ticket cancellation / correction reason (minimum 8 characters):');if(reason&&reason.trim().length>=8){try{await onVoidTicket(data,reason.trim())}catch(error){window.alert(error.message)}}}}>Cancel ticket</button>}<button className="btn ghost" onClick={onClose}>Close</button><button className="btn primary" onClick={()=>window.print()}><Printer size={15}/> Print</button></div>
   </Modal>;
 }
 
