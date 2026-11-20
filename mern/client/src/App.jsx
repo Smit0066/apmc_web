@@ -312,7 +312,6 @@ function ModuleScreen({page,user,notify}) {
   },[page,cfg.endpoint,pageNum,query]);
   useEffect(()=>{load()},[load]);
   const filtered=useMemo(()=>query && !['gate','sales','buyerledger'].includes(page) ? rows.filter(item=>JSON.stringify(item).toLowerCase().includes(query.toLowerCase())) : rows,[rows,query,page]);
-  const fields=FormFieldsFor(page,options);
   const fields = page==='users' && editRow ? [
     field('role','Assigned role','select',{required:true,options:Object.entries(roles).map(([value,label])=>({value,label}))}),
     field('active','Account status','select',{required:true,options:[{value:'true',label:'Active'},{value:'false',label:'Inactive'}]}),
