@@ -29,9 +29,9 @@ describe('Dashboard', () => {
   it('shows loading then the metrics, greeting by first name and role pill', async () => {
     mockFetch(routes());
     render(<Dashboard user={{ name: 'Asha Patel', role: 'accounts' }} onNavigate={() => {}}/>);
-    expect(screen.getByText(/Dashboard data/)).toBeInTheDocument();
+    expect(screen.getByText(/ડેશબોર્ડ ડેટા/)).toBeInTheDocument();
     expect(await screen.findByText('નમસ્કાર, Asha')).toBeInTheDocument();
-    expect(screen.getByText('Accounts Officer')).toBeInTheDocument();
+    expect(screen.getByText('હિસાબી અધિકારી')).toBeInTheDocument();
     expect(screen.getAllByText('₹5,000.00').length).toBeGreaterThan(0);
     expect(screen.getAllByText('₹12,000.00').length).toBeGreaterThan(0);
     expect(screen.getByText('₹12,000.00', { selector: 'strong' })).toBeInTheDocument();
@@ -48,10 +48,10 @@ describe('Dashboard', () => {
     mockFetch(routes());
     const onNavigate = vi.fn();
     render(<Dashboard user={{ name: 'G', role: 'gate' }} onNavigate={onNavigate}/>);
-    await screen.findByText('Quick Actions');
+    await screen.findByText('ઝડપી કામગીરી');
     const qa = document.querySelector('.quick-actions');
-    expect(within(qa).queryByText('Payments & Settlement')).toBeNull();
-    await userEvent.click(within(qa).getByText('Gate Entry'));
+    expect(within(qa).queryByText('ચુકવણી અને હિસાબ')).toBeNull();
+    await userEvent.click(within(qa).getByText('ગેટ એન્ટ્રી'));
     expect(onNavigate).toHaveBeenCalledWith('gate');
     expect(qa.querySelectorAll('button').length).toBeLessThanOrEqual(6);
   });
@@ -59,19 +59,19 @@ describe('Dashboard', () => {
     const f = mockFetch(routes());
     const onNavigate = vi.fn();
     render(<Dashboard user={{ name: 'A', role: 'admin' }} onNavigate={onNavigate}/>);
-    await screen.findByText('Financial Snapshot');
-    await userEvent.click(screen.getByText(/Open settlement ledger/));
+    await screen.findByText('નાણાકીય સારાંશ');
+    await userEvent.click(screen.getByText(/ચુકવણી ખાતું ખોલો/));
     expect(onNavigate).toHaveBeenCalledWith('payments');
     await userEvent.click(screen.getByText(/બધા જુઓ/));
     expect(onNavigate).toHaveBeenCalledWith('gate');
     const before = f.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /Refresh/ }));
+    await userEvent.click(screen.getByRole('button', { name: /રિફ્રેશ/ }));
     await vi.waitFor(() => expect(f.calls.length).toBe(before + 3));
   });
   it('clamps buyer dues at zero when overpaid', async () => {
     mockFetch(routes({ 'GET /yard/overview': { stats: { ...stats, buyerDues: 100, buyerDuesPaid: 500 } } }));
     render(<Dashboard user={{ name: 'A', role: 'admin' }} onNavigate={() => {}}/>);
-    const row = (await screen.findByText('Buyer-side dues pending')).parentElement;
+    const row = (await screen.findByText('ખરીદદાર-પક્ષની બાકી લેણી રકમ')).parentElement;
     expect(within(row).getByText('₹0.00')).toBeInTheDocument();
   });
 });
@@ -80,7 +80,7 @@ describe('YardLive', () => {
   it('renders status cards, stock, dues, activity and the arrivals chart', () => {
     const onNavigate = vi.fn();
     render(<YardLive live={live()} onNavigate={onNavigate}/>);
-    expect(screen.getByText('3 lot')).toBeInTheDocument();
+    expect(screen.getByText('3 લોટ')).toBeInTheDocument();
     expect(screen.getByText('2 પાસ')).toBeInTheDocument();
     expect(screen.getByText('42.5 ક્વિન્ટલ અંદર')).toBeInTheDocument();
     expect(screen.getByText('LOT-9')).toBeInTheDocument();
@@ -88,22 +88,22 @@ describe('YardLive', () => {
     expect(screen.getByText('7 Q')).toBeInTheDocument(); // estimated fallback
     expect(screen.getByText('Patel')).toBeInTheDocument();
     expect(screen.getByText('હરાજી બાકી', { selector: 'td' })).toBeInTheDocument();
-    expect(screen.getByText('Provisional · weighment બાકી')).toBeInTheDocument();
-    expect(screen.getByText('Credit overdue')).toBeInTheDocument();
+    expect(screen.getByText('કામચલાઉ · વજન બાકી')).toBeInTheDocument();
+    expect(screen.getByText('ક્રેડિટ મુદત વટાવી')).toBeInTheDocument();
     expect(screen.getByText('વસૂલાત બાકી')).toBeInTheDocument();
-    expect(screen.getByText('Registration ID બાકી')).toBeInTheDocument();
-    expect(screen.getByText('GATE_ENTRY_CREATED')).toBeInTheDocument();
-    const svg = screen.getByRole('img', { name: /arrivals per hour/ });
+    expect(screen.getByText('નોંધણી ID બાકી')).toBeInTheDocument();
+    expect(screen.getByText('ગેટ એન્ટ્રી નોંધાઈ')).toBeInTheDocument();
+    const svg = screen.getByRole('img', { name: /આજની કલાક પ્રમાણે આવક/ });
     expect(svg.querySelectorAll('rect')).toHaveLength(17); // hours 5..21
     expect(within(svg).getByText('4')).toBeInTheDocument();
     expect(screen.getByText('મર્યાદા વટાવી')).toBeInTheDocument();
   });
   it('shows empty states and the no-activity notice for restricted roles', () => {
     render(<YardLive live={live({ stock: [], farmerDues: [], traderDues: [], activity: [] })} onNavigate={() => {}}/>);
-    expect(screen.getByText('યાર્ડમાં કોઈ stock નથી')).toBeInTheDocument();
+    expect(screen.getByText('યાર્ડમાં કોઈ સ્ટોક નથી')).toBeInTheDocument();
     expect(screen.getByText('ખેડૂતની કોઈ ચુકવણી બાકી નથી.')).toBeInTheDocument();
     expect(screen.getByText('વેપારીની ખરીદ ચુકવણી બાકી નથી.')).toBeInTheDocument();
-    expect(screen.getByText('આ role માટે activity feed ઉપલબ્ધ નથી')).toBeInTheDocument();
+    expect(screen.getByText('આ ભૂમિકા માટે પ્રવૃત્તિ ફીડ ઉપલબ્ધ નથી')).toBeInTheDocument();
   });
   it('draws a flat chart (no NaN) when there are no arrivals', () => {
     const { container } = render(<YardLive live={live({ arrivalsByHour: Array.from({ length: 24 }, (_, hour) => ({ hour, lots: 0 })) })} onNavigate={() => {}}/>);

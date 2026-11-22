@@ -131,3 +131,23 @@ Tests never touch the database named in `server/.env`; they create and drop thei
 * **Logs:** the real server log for that run contained **no WARN or ERROR lines**. Server and client suite output shows no Mongoose, deprecation or duplicate-index warnings. A source scan found **no stray debug logging**: the only `console.*` calls are the structured logger itself and two intentional `seedAdmin.js` messages.
 * **Not done:** real-browser clicking. The Claude-in-Chrome extension was not connected (no browsers listed), so rendering, console errors and visual behaviour in a real browser were **not** tested; UI behaviour is covered by the jsdom tests only.
 * The Vite warning `Cannot find package 'react-refresh'` seen in that run came from my temporary config file living outside the project; it is not an app issue.
+
+## 9. UI alignment with the reference design + multilingual support (2026-11-22)
+
+**Reference:** the supplied URL serves the legacy `public/` app; its `styles.css` and `app.js` are byte-identical to the local files (only a platform badge script is injected). Its language button is a placeholder (flips a label), so the translation system was built from scratch.
+
+**Result:** client suite 397/397 (was 235; +162 tests: i18n core 13, yard i18n 34, shell/screens/common i18n 77, utils/api/server-message 29, shell layout 9). Production build succeeds. The server was not changed in this pass.
+
+**What changed**
+* New `src/i18n/` module: `t()`, `useI18n()`, persisted language (`localStorage`, mirrored to `<html lang>`), `LanguageSelect` (topbar and login), per-feature catalogues in `i18n/locales/*.js` for **Gujarati (default, original text kept verbatim), English and Hindi** (~560 keys each). A parity test fails if any key, placeholder or script is missing or mixed in any language. Server (API) messages are translated by exact or `{pattern}` match (86 messages); a test fails if the server gains an untranslated message. Dates follow the language locale; amounts keep Indian digit grouping.
+* Shell restyled to the reference: white sidebar, "અ" brand mark + YardOS wordmark, yard card, sectioned and numbered navigation, breadcrumb, search · language · bell · user cluster, two-part footer bar, reference tokens (colours, 13px base, Noto Sans Gujarati/Devanagari + DM Sans), cards, tables with status dots, pills, modals, forms, toasts; responsive breakpoints 1150 / 820 / 560 as in the reference. Page headings, subtitles and kickers use the reference's Gujarati wording.
+* Raw API path in the page kicker ("· /YARD/LOTS") removed.
+
+**Verified in a real browser (headless Chrome against the running app)**: every screen at desktop/tablet/phone sizes compared with the reference; language switch on login and in-app; persistence across reload; Hindi and English across all 13 screens and the create form show no Gujarati UI text; no console errors.
+
+**Not done / decisions for you**
+* Not matched on purpose: demo banner, "DEMO DATA" notice and demo-reset (the reference is a prototype with sample data); the **help card** (it links nowhere in the reference, so it would be a dead control); the dashboard's demo line chart (this app shows real arrivals-per-hour bars). The "Authenticated" status pill was kept (existing UI), restyled.
+* Only the default Gujarati headings were aligned to the reference wording; English/Hindi headings are natural translations.
+* **Hindi was written by me and needs a native-speaker review.** Gujarati dashboard stat labels keep the app's existing mixed Gujarati/English wording.
+* Commodity names are data (yard settings) and are displayed as stored in every language; the API matches them exactly.
+* `npm run test -w client` still needs the `node_modules` ownership fix (§6.3); results above are from the equivalent scratch harness.

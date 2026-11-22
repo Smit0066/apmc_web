@@ -1,17 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, ArrowDownToLine, RefreshCw, Scale, Search, Wallet, Truck } from 'lucide-react';
-import { roles } from '../../constants/roles.js';
-import { pageConfig } from '../../constants/pageConfig.js';
+import { pageConfig, columnsFor } from '../../constants/pageConfig.js';
+import { useI18n } from '../../i18n/index.js';
 import { labelFor, money, number } from '../../utils/format.js';
 import { exportCsv } from '../../utils/csv.js';
 import { api } from '../../services/api.js';
 import { FormDialog } from '../../components/common/FormDialog.jsx';
 import { DataTable } from '../../components/common/DataTable.jsx';
-import { FormFieldsFor, field } from './FormFields.jsx';
+import { FormFieldsFor, userEditFields } from './FormFields.jsx';
 import { DetailModal } from './DetailModal.jsx';
 
+/** Builds select options from the raw API responses. Runs in render (memoised on language) so labels follow language changes. */
+function buildOptions(page,extra,t) {
+  if(!extra)return {};
+  if(page==='auction')return {lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+x.commodity})),buyers:extra[1].items.filter(x=>x.active).map(x=>{const hold=x.ledger?.overdueCount>0,full=x.ledger?.limitFull;const v={name:x.name,reg:x.registrationNo};return {value:x._id,disabled:hold||full,label:hold?t('yard.opt.buyerHold',v):full?t('yard.opt.buyerFull',v):x.name+' · '+x.registrationNo}})};
+  if(page==='weighment')return {lots:extra[0].items.filter(x=>['auctioned','weighed'].includes(x.status)).map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+labelFor(x.status)}))};
+  if(page==='payments')return {bills:extra[0].items.filter(x=>x.status!=='cancelled').map(x=>({value:x._id,label:t('yard.opt.bill',{bill:x.billNumber,farmer:x.farmerName,amount:money(x.farmerNetPayable)})}))};
+  if(page==='gatepass')return {lots:extra[0].items.map(x=>({value:x._id,label:t('yard.opt.passLot',{lot:x.lotNumber,farmer:x.farmerName,net:number(x.netWeight)})}))};
+  if(page==='disputes')return {lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName}))};
+  if(page==='gate')return {commodities:(extra[0].item?.commodities||extra[0].commodities||[]).map(x=>({value:x,label:x}))};
+  return {};
+}
+
 export function ModuleScreen({page,user,notify}) {
-  const cfg=pageConfig[page];const [rows,setRows]=useState([]);const [options,setOptions]=useState({});const [loading,setLoading]=useState(true);
+  const {t,lang}=useI18n();
+  const cfg=pageConfig[page];const [rows,setRows]=useState([]);const [optionData,setOptionData]=useState(null);const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');const [query,setQuery]=useState('');const [formOpen,setFormOpen]=useState(false);const [busy,setBusy]=useState(false);const [pageNum,setPageNum]=useState(1);const [total,setTotal]=useState(0);
   const [detail,setDetail]=useState(null);const [editRow,setEditRow]=useState(null);
   const load=useCallback(async()=>{
@@ -29,22 +42,14 @@ export function ModuleScreen({page,user,notify}) {
       })();
       const source=data.items||[];
       setRows(source);setTotal(Number(data.total ?? source.length));
-      if(page==='auction')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+x.commodity})),buyers:extra[1].items.filter(x=>x.active).map(x=>{const hold=x.ledger?.overdueCount>0,full=x.ledger?.limitFull;return {value:x._id,disabled:hold||full,label:x.name+' · '+x.registrationNo+(hold?' · Credit hold (overdue)':full?' · Purchase limit full':'')}})});
-      if(page==='weighment')setOptions({lots:extra[0].items.filter(x=>['auctioned','weighed'].includes(x.status)).map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+labelFor(x.status)}))});
-      if(page==='payments')setOptions({bills:extra[0].items.filter(x=>x.status!=='cancelled').map(x=>({value:x._id,label:x.billNumber+' · '+x.farmerName+' · payable '+money(x.farmerNetPayable)}))});
-      if(page==='gatepass')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+number(x.netWeight)+' Q'}))});
-      if(page==='disputes')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName}))});
-      if(page==='gate')setOptions({commodities:(extra[0].item?.commodities||extra[0].commodities||[]).map(x=>({value:x,label:x}))});
+      if(['auction','weighment','payments','gatepass','disputes','gate'].includes(page))setOptionData({page,extra});
     }catch(e){setError(e.message)}finally{setLoading(false)}
   },[page,cfg.endpoint,pageNum,query]);
   useEffect(()=>{load()},[load]);
+  const options=useMemo(()=>optionData&&optionData.page===page?buildOptions(page,optionData.extra,t):{},[optionData,page,lang]);
   const filtered=useMemo(()=>{const base=query && !['gate','sales','buyerledger'].includes(page) ? rows.filter(item=>JSON.stringify(item).toLowerCase().includes(query.toLowerCase())) : rows;
-    return page==='buyerledger'?base.map(b=>({...b,creditStatus:b.ledger?.overdueCount?b.ledger.overdueCount+' overdue':b.ledger?.limitFull?'Limit full':'Within limit'})):base;},[rows,query,page]);
-  const fields = page==='users' && editRow ? [
-    field('role','Assigned role','select',{required:true,options:Object.entries(roles).map(([value,label])=>({value,label}))}),
-    field('active','Account status','select',{required:true,options:[{value:'true',label:'Active'},{value:'false',label:'Inactive'}]}),
-    field('password','Reset password (optional)','password',{required:false,hint:'Leave blank to keep the current password. New password must be at least 12 characters.'})
-  ] : FormFieldsFor(page,options);
+    return page==='buyerledger'?base.map(b=>({...b,creditStatus:b.ledger?.overdueCount?t('yard.credit.overdue',{count:b.ledger.overdueCount}):b.ledger?.limitFull?t('yard.credit.full'):t('yard.credit.within')})):base;},[rows,query,page,lang]);
+  const fields = page==='users' && editRow ? userEditFields() : FormFieldsFor(page,options);
   const create=async values=>{
     setBusy(true);
     try{
@@ -52,7 +57,7 @@ export function ModuleScreen({page,user,notify}) {
       else if(page==='buyerledger' && editRow) await api('/yard/buyers/'+editRow._id,{method:'PATCH',body:values});
       else if(page==='users' && editRow) await api('/yard/users/'+editRow._id,{method:'PATCH',body:values});
       else await api(cfg.endpoint,{method:'POST',body:values});
-      notify(editRow?'વેપારીની વિગતો update થઈ.':'રેકોર્ડ સફળતાપૂર્વક સાચવાયો.');
+      notify(editRow?t('yard.toast.buyerUpdated'):t('yard.toast.saved'));
       setEditRow(null); await load();
     }finally{setBusy(false)}
   };
@@ -62,21 +67,21 @@ export function ModuleScreen({page,user,notify}) {
       if(page==='auction'){setDetail({kind:'ticket',data:item});return;}
       if(page==='sales'){setDetail({kind:'bill',data:item});return;}
       if(page==='gatepass'&&item.status==='issued'){
-        if(!window.confirm('આ vehicle નો yard exit confirm કરવો છે?'))return;
+        if(!window.confirm(t('yard.confirm.exit')))return;
         await api('/yard/gate-passes/'+item._id+'/dispatch',{method:'POST',body:{}});
-        notify('Vehicle exit record નોંધાયો.');await load();return;
+        notify(t('yard.toast.exitRecorded'));await load();return;
       }
       if(page==='disputes'){
         if(!['admin','inspector'].includes(user.role)){setDetail({kind:'complaint',data:item});return;}
         const nextStatus=item.status==='open'?'investigating':'resolved';
         let resolution='';
-        if(nextStatus==='resolved'){resolution=window.prompt('ફરિયાદ ઉકેલવાનો reason લખો (ફરજિયાત):')||'';if(resolution.trim().length<3)return;}
+        if(nextStatus==='resolved'){resolution=window.prompt(t('yard.prompt.resolution'))||'';if(resolution.trim().length<3)return;}
         await api('/yard/complaints/'+item._id,{method:'PATCH',body:{status:nextStatus,...(resolution?{resolution}: {})}});
-        notify('Complaint status update થયો.');await load();return;
+        notify(t('yard.toast.complaintUpdated'));await load();return;
       }
       if(page==='buyerledger'){setEditRow(item);setFormOpen(true);return;}
       if(page==='users'){
-        if(String(item._id)===String(user.id)){notify('તમારા પોતાના account ની role/status બદલી શકાતી નથી.','error');return;}
+        if(String(item._id)===String(user.id)){notify(t('yard.toast.ownAccount'),'error');return;}
         setEditRow(item);setFormOpen(true);return;
       }
     }catch(e){notify(e.message,'error')}
@@ -92,28 +97,28 @@ export function ModuleScreen({page,user,notify}) {
         pageTotal=Math.max(1,Math.ceil(Number(response.total??all.length)/100));
         current++;
       } while(current<=pageTotal && current<=100);
-      exportCsv(all,cfg.columns,(page==='gate'?'apmc-lot-register':page)+'-export.csv');
-      notify('CSV export તૈયાર છે ('+all.length+' records).');
+      exportCsv(all,columnsFor(page),(page==='gate'?'apmc-lot-register':page)+'-export.csv');
+      notify(t('yard.toast.csvReady',{count:all.length}));
     } catch(error) { notify(error.message,'error'); }
   };
   return <div className="page-stack">
-    <div className="page-head"><div><span className="eyebrow">YARD OPERATIONS · {cfg.endpoint.toUpperCase()}</span><h1>{cfg.title}</h1><p>{cfg.subtitle}</p></div><div className="page-actions">
-      {cfg.createLabel&&cfg.createRoles.includes(user.role)&&<button className="btn primary" onClick={()=>setFormOpen(true)}>＋ {cfg.createLabel}</button>}
-      <button className="btn ghost" onClick={load}><RefreshCw size={15}/> Refresh</button>
-      <button className="btn ghost" onClick={onExport} disabled={!rows.length}><ArrowDownToLine size={15}/> CSV</button>
+    <div className="page-head"><div><span className="eyebrow">{t('yard.page.'+page+'.eyebrow')}</span><h1>{t(cfg.titleKey)}</h1><p>{t(cfg.subtitleKey)}</p></div><div className="page-actions">
+      {cfg.createLabelKey&&cfg.createRoles.includes(user.role)&&<button className="btn primary" onClick={()=>setFormOpen(true)}>＋ {t(cfg.createLabelKey)}</button>}
+      <button className="btn ghost" onClick={load}><RefreshCw size={15}/> {t('yard.refresh')}</button>
+      <button className="btn ghost" onClick={onExport} disabled={!rows.length}><ArrowDownToLine size={15}/> {t('yard.csv')}</button>
     </div></div>
     <section className="surface-card">
-      <div className="table-toolbar"><div className="table-info"><b>{cfg.title}</b><span>{filtered.length} records · Server database</span></div><label className="search-box"><Search size={15}/><input placeholder="રેકોર્ડ શોધો..." value={query} onChange={e=>{setQuery(e.target.value);setPageNum(1)}}/></label></div>
+      <div className="table-toolbar"><div className="table-info"><b>{t(cfg.titleKey)}</b><span>{t('yard.recordsInfo',{count:filtered.length})}</span></div><label className="search-box"><Search size={15}/><input placeholder={t('yard.search.ph')} value={query} onChange={e=>{setQuery(e.target.value);setPageNum(1)}}/></label></div>
       {error&&<div className="inline-error"><AlertCircle size={15}/>{error}</div>}
-      {loading?<div className="loading-panel"><RefreshCw className="spin" size={17}/> Records લાવી રહ્યા છીએ…</div>
-      :<><DataTable columns={cfg.columns} rows={filtered} onRowAction={['gate','auction','sales','gatepass','disputes','users','buyerledger'].includes(page)?rowAction:null} secondaryAction={page==='auction'?{label:'Print',onClick:t=>setDetail({kind:'ticketprint',data:t})}:page==='gatepass'?{label:'Pass',onClick:p=>setDetail({kind:'passprint',data:p})}:null} actionLabel={page==='gatepass'?'Exit confirm':page==='disputes'?'Review / Resolve':page==='users'?'Edit role / access':page==='buyerledger'?'Edit credit':'વિગત'}/>
-        {total>25&&<div className="pagination"><span>{(pageNum-1)*25+1}–{Math.min(pageNum*25,total)} of {total} records</span><div><button className="btn ghost" disabled={pageNum<=1} onClick={()=>setPageNum(v=>Math.max(1,v-1))}>Previous</button><button className="btn ghost" disabled={pageNum>=Math.ceil(total/25)} onClick={()=>setPageNum(v=>v+1)}>Next</button></div></div>}
+      {loading?<div className="loading-panel"><RefreshCw className="spin" size={17}/> {t('yard.loadingRecords')}</div>
+      :<><DataTable columns={columnsFor(page)} rows={filtered} onRowAction={['gate','auction','sales','gatepass','disputes','users','buyerledger'].includes(page)?rowAction:null} secondaryAction={page==='auction'?{label:t('yard.action.print'),onClick:tk=>setDetail({kind:'ticketprint',data:tk})}:page==='gatepass'?{label:t('yard.action.pass'),onClick:p=>setDetail({kind:'passprint',data:p})}:null} actionLabel={t(['gatepass','disputes','users','buyerledger'].includes(page)?'yard.action.'+page:'yard.action.default')}/>
+        {total>25&&<div className="pagination"><span>{t('yard.pagination.info',{from:(pageNum-1)*25+1,to:Math.min(pageNum*25,total),total})}</span><div><button className="btn ghost" disabled={pageNum<=1} onClick={()=>setPageNum(v=>Math.max(1,v-1))}>{t('yard.pagination.prev')}</button><button className="btn ghost" disabled={pageNum>=Math.ceil(total/25)} onClick={()=>setPageNum(v=>v+1)}>{t('yard.pagination.next')}</button></div></div>}
       </>}
     </section>
-    {page==='weighment'&&<div className="notice-panel"><Scale size={17}/> Scale hardware હજુ connect નથી. હાલ certified machine reading ને operator manually દાખલ કરે છે; productionમાં device protocol, calibration certificate અને signed slip verification જોઈએ.</div>}
-    {page==='payments'&&<div className="notice-panel"><Wallet size={17}/> Payment entry actual money transfer કરતી નથી. UTR / external transaction reference verify કર્યા પછી જ receipt નોંધો.</div>}
-    {page==='gatepass'&&<div className="notice-panel"><Truck size={17}/> Statutory transit permit અલગ requirement હોઈ શકે છે. આ module yard exit control record આપે છે; APMC-approved permit processનું replacement નથી.</div>}
-    {formOpen&&<FormDialog title={editRow?(page==='users'?'Staff role / access સુધારો':'વેપારી credit policy સુધારો'):cfg.createLabel} fields={fields} initialValues={editRow||{}} onClose={()=>{setFormOpen(false);setEditRow(null)}} onSubmit={create} busy={busy} submitLabel="સાચવો"/>}
-    {detail&&<DetailModal detail={detail} user={user} onPrint={t=>setDetail({kind:'ticketprint',data:t})} onClose={()=>setDetail(null)} onVoidTicket={async(ticket,reason)=>{await api('/yard/tickets/'+ticket._id+'/void',{method:'POST',body:{reason}});notify('Auction ticket cancel થઈ. Lot ફરી auction queue માં ઉપલબ્ધ છે.');setDetail(null);await load();}}/>}
+    {page==='weighment'&&<div className="notice-panel"><Scale size={17}/> {t('yard.notice.weighment')}</div>}
+    {page==='payments'&&<div className="notice-panel"><Wallet size={17}/> {t('yard.notice.payments')}</div>}
+    {page==='gatepass'&&<div className="notice-panel"><Truck size={17}/> {t('yard.notice.gatepass')}</div>}
+    {formOpen&&<FormDialog title={editRow?(page==='users'?t('yard.dialog.editStaff'):t('yard.dialog.editBuyer')):t(cfg.createLabelKey)} fields={fields} initialValues={editRow||{}} onClose={()=>{setFormOpen(false);setEditRow(null)}} onSubmit={create} busy={busy} submitLabel={t('common.save')}/>}
+    {detail&&<DetailModal detail={detail} user={user} onPrint={t=>setDetail({kind:'ticketprint',data:t})} onClose={()=>setDetail(null)} onVoidTicket={async(ticket,reason)=>{await api('/yard/tickets/'+ticket._id+'/void',{method:'POST',body:{reason}});notify(t('yard.toast.ticketCancelled'));setDetail(null);await load();}}/>}
   </div>;
 }

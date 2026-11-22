@@ -57,7 +57,7 @@ describe('FormFieldsFor', () => {
     expect(keys('gatepass')).toEqual(['lotId', 'overrideReason']);
   });
   it('complaint form allows an unlinked complaint first', () => {
-    expect(get('disputes', 'lotId', { lots: [{ value: 'l', label: 'L' }] }).options[0]).toEqual({ value: '', label: 'Unlinked complaint' });
+    expect(get('disputes', 'lotId', { lots: [{ value: 'l', label: 'L' }] }).options[0]).toEqual({ value: '', label: 'લિંક વગરની ફરિયાદ' });
     expect(get('disputes', 'details').required).toBe(true);
     expect(get('disputes', 'details').type).toBe('textarea');
   });

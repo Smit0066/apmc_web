@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { labelFor, money, number, dateTime } from '../../utils/format.js';
+import { useI18n } from '../../i18n/index.js';
 
 // Same QR library the reference prototype uses; falls back to a text placeholder when unavailable/offline.
 const QR_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
@@ -12,34 +13,36 @@ const loadQr = () => window.QRCode ? Promise.resolve(window.QRCode) : new Promis
   document.head.appendChild(script);
 });
 
-const COPIES = [['FARMER','વેચનારની નકલ'],['BUYER','ખરીદદારની નકલ'],['YARD','યાર્ડની ઓફિસ નકલ']];
+const COPIES = ['farmer', 'buyer', 'yard'];
 
-function Ticket({ ticket, copy, label, yardName }) {
+function Ticket({ ticket, copy, yardName }) {
+  const { t } = useI18n();
   const lot = ticket.lot || {};
   const identity = lot.sellerType === 'trader'
-    ? 'Trader Registration: ' + (lot.traderRegistrationNo || '—')
-    : 'Farmer ID: ' + (lot.farmerRegistryId || '—') + ' · ' + (lot.landRecordType || 'Land Record') + ': ' + (lot.landRecordNo || '—');
+    ? t('print.ticket.identityTrader', { id: lot.traderRegistrationNo || '—' })
+    : t('print.ticket.identityFarmer', { id: lot.farmerRegistryId || '—', type: lot.landRecordType || t('print.ticket.landRecord'), no: lot.landRecordNo || '—' });
   const qrText = [ticket.ticketNumber, lot.lotNumber, ticket.rate].join('|');
   const fields = [
-    ['Lot ID', lot.lotNumber], ['વેચનારનો પ્રકાર', lot.sellerType === 'trader' ? 'વેપારી' : 'ખેડૂત'],
-    ['વેચનાર / ખેડૂતનું નામ', lot.farmerName], ['વેચનાર ઓળખ', identity],
-    ['પાક / Grade', (lot.commodity || '—') + ' / ' + (ticket.quality || '—')], ['ખરીદદાર', ticket.buyer?.name],
-    ['ખરીદદાર Registration ID', ticket.buyer?.registrationNo || '—'], ['બેગ', lot.bags],
-    ['હરાજી જથ્થો (પ્રાથમિક)', number(ticket.quantity) + ' Q'], ['હરાજી ભાવ', money(ticket.rate) + ' / Q'],
-    ['હરાજી પદ્ધતિ', labelFor(ticket.method)], ['પ્રાથમિક કિંમત', money(ticket.quantity * ticket.rate)],
-    ['ખેડૂત ચુકવણી deadline', dateTime(ticket.farmerPaymentDueAt)], ['માલ નિકાલ deadline', dateTime(ticket.dispatchDueAt)],
-    ['વેપારી credit due', dateTime(ticket.buyerCreditDueAt)]
+    [t('print.ticket.lotId'), lot.lotNumber], [t('print.ticket.sellerType'), lot.sellerType === 'trader' ? t('print.ticket.trader') : t('print.ticket.farmer')],
+    [t('print.ticket.sellerName'), lot.farmerName], [t('print.ticket.sellerIdentity'), identity],
+    [t('print.ticket.cropGrade'), (lot.commodity || '—') + ' / ' + (ticket.quality || '—')], [t('print.ticket.buyer'), ticket.buyer?.name],
+    [t('print.ticket.buyerReg'), ticket.buyer?.registrationNo || '—'], [t('print.ticket.bags'), lot.bags],
+    [t('print.ticket.quantity'), number(ticket.quantity) + ' Q'], [t('print.ticket.rate'), money(ticket.rate) + ' / Q'],
+    [t('print.ticket.method'), labelFor(ticket.method)], [t('print.ticket.value'), money(ticket.quantity * ticket.rate)],
+    [t('print.ticket.farmerDeadline'), dateTime(ticket.farmerPaymentDueAt)], [t('print.ticket.dispatchDeadline'), dateTime(ticket.dispatchDueAt)],
+    [t('print.ticket.creditDue'), dateTime(ticket.buyerCreditDueAt)]
   ];
-  return <div className="ticket-copy"><div className="ticket-copy-label">{copy} COPY · {label}</div>
+  return <div className="ticket-copy"><div className="ticket-copy-label">{t('print.copyLine', { copy: t('print.copy.' + copy), label: t('print.copyLabel.' + copy) })}</div>
     <div className="ticket">
-      <div className="ticket-top"><div className="ticket-logo">APMC YARDOS · DIGITAL MARKET RECORD</div><h3>હરાજી ભાવ-કાપલી</h3><p>{yardName} · {dateTime(ticket.createdAt)}</p></div>
-      <div className="ticket-no"><div><small>ટિકિટ નંબર</small><strong>{ticket.ticketNumber}</strong></div><div className="qr-wrap" data-qr={qrText}><span>QR</span></div></div>
+      <div className="ticket-top"><div className="ticket-logo">{t('print.ticket.logo')}</div><h3>{t('print.ticket.title')}</h3><p>{yardName} · {dateTime(ticket.createdAt)}</p></div>
+      <div className="ticket-no"><div><small>{t('print.ticket.number')}</small><strong>{ticket.ticketNumber}</strong></div><div className="qr-wrap" data-qr={qrText}><span>{t('print.ticket.qr')}</span></div></div>
       <div className="ticket-grid">{fields.map(([k, v]) => <div className="ticket-field" key={k}><small>{k}</small><strong>{v ?? '—'}</strong></div>)}</div>
     </div></div>;
 }
 
 export function TicketPrint({ ticket }) {
-  const [yardName, setYardName] = useState('APMC Market Yard');
+  const { t } = useI18n();
+  const [yardName, setYardName] = useState(null);
   useEffect(() => { api('/yard/settings').then(d => d.item?.committeeName && setYardName(d.item.committeeName)).catch(() => {}); }, []);
   useEffect(() => {
     let live = true;
@@ -54,7 +57,7 @@ export function TicketPrint({ ticket }) {
     return () => { live = false; };
   }, [ticket]);
   return <div>
-    <div className="print-area">{COPIES.map(([copy, label]) => <Ticket key={copy} ticket={ticket} copy={copy} label={label} yardName={yardName}/>)}</div>
-    <div className="form-actions"><button className="btn primary" onClick={() => window.print()}><Printer size={15}/> ત્રણેય નકલ Print કરો</button></div>
+    <div className="print-area">{COPIES.map(copy => <Ticket key={copy} ticket={ticket} copy={copy} yardName={yardName ?? t('print.yardDefault')}/>)}</div>
+    <div className="form-actions"><button className="btn primary" onClick={() => window.print()}><Printer size={15}/> {t('print.printAll')}</button></div>
   </div>;
 }

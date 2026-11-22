@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Workspace } from './Workspace.jsx';
 import { navigation } from '../constants/navigation.js';
 import { mockFetch } from '../test/mockFetch.js';
+import { translateServerMessage } from '../i18n/index.js';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 const u = (role, name = 'Asha Patel') => ({ id: 'u1', name, role });
@@ -22,61 +23,62 @@ describe('Workspace', () => {
     render(<Workspace user={u(role)} onLogout={() => {}} notify={() => {}}/>);
     const expected = navigation.filter(n => n.roles.includes(role)).map(n => n.label);
     expect(navButtons()).toEqual(expected);
-    await screen.findByText(/MARKET YARD · SURAT APMC/);
+    await screen.findByText('Surat APMC');
   });
   it('shows user identity, role label, avatar initial and the yard name', async () => {
     mockFetch(routes());
     render(<Workspace user={u('accounts')} onLogout={() => {}} notify={() => {}}/>);
     expect(screen.getAllByText('Asha Patel').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Accounts Officer').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('હિસાબી અધિકારી').length).toBeGreaterThan(0);
     expect(screen.getAllByText('A', { selector: '.user-avatar' }).length).toBeGreaterThan(0);
-    expect(await screen.findByText('MARKET YARD · SURAT APMC')).toBeInTheDocument();
+    expect(await screen.findByText('Surat APMC')).toBeInTheDocument();
+    expect(document.querySelector('.yard-select small').textContent).toBe('માર્કેટ યાર્ડ');
   });
   it('falls back to a generic yard tag when settings fail', async () => {
     mockFetch(routes({ 'GET /yard/settings': { status: 500, body: { message: 'x' } } }));
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    expect(await screen.findByText('MARKET YARD · OPERATIONS')).toBeInTheDocument();
+    expect(await screen.findByText('APMC યાર્ડ')).toBeInTheDocument();
   });
   it('navigates between modules and updates the breadcrumb', async () => {
     mockFetch(routes());
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    expect(document.querySelector('.breadcrumb b').textContent).toBe('Dashboard');
-    await userEvent.click(screen.getByRole('button', { name: /Audit Trail/ }));
-    expect(document.querySelector('.breadcrumb b').textContent).toBe('Audit Trail');
-    expect(await screen.findByText('Append-only Audit Trail', { selector: 'h1' })).toBeInTheDocument();
+    expect(document.querySelector('.breadcrumb b').textContent).toBe('ડેશબોર્ડ');
+    await userEvent.click(screen.getByRole('button', { name: /ઓડિટ ટ્રેલ/ }));
+    expect(document.querySelector('.breadcrumb b').textContent).toBe('ઓડિટ ટ્રેલ');
+    expect(await screen.findByText('ઓડિટ ટ્રેલ અને પ્રવૃત્તિ લોગ', { selector: 'h1' })).toBeInTheDocument();
   });
   it('shows nav badges for the auction queue and open complaints', async () => {
     mockFetch(routes());
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    const auction = screen.getByRole('button', { name: /Auction & Tickets/ });
+    const auction = screen.getByRole('button', { name: /હરાજી \/ ભાવ-કાપલી/ });
     await waitFor(() => expect(within(auction).getByText('3')).toHaveClass('nav-badge'));
-    expect(within(screen.getByRole('button', { name: /Complaints/ })).getByText('2')).toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /ફરિયાદ \/ વિવાદ/ })).getByText('2')).toBeInTheDocument();
   });
   it('bell lists only non-zero reminders and navigates to the relevant module', async () => {
     mockFetch(routes());
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
     await waitFor(() => expect(document.querySelector('.bell-dot')).not.toBeNull());
-    await userEvent.click(screen.getByRole('button', { name: 'Reminders' }));
+    await userEvent.click(screen.getByRole('button', { name: 'રિમાઇન્ડર' }));
     const menu = screen.getByRole('menu');
-    expect(within(menu).getByText('open complaints (તપાસ બાકી)')).toBeInTheDocument();
-    expect(within(menu).getByText('માલ નિકાલ deadline વટાવી')).toBeInTheDocument();
-    expect(within(menu).queryByText('વેપારી credit overdue')).toBeNull();
-    await userEvent.click(within(menu).getByText('માલ નિકાલ deadline વટાવી'));
+    expect(within(menu).getByText('ખુલ્લી ફરિયાદો (તપાસ બાકી)')).toBeInTheDocument();
+    expect(within(menu).getByText('માલ નિકાલની સમયમર્યાદા વટાવી')).toBeInTheDocument();
+    expect(within(menu).queryByText('વેપારીની ક્રેડિટ મુદત વટાવી')).toBeNull();
+    await userEvent.click(within(menu).getByText('માલ નિકાલની સમયમર્યાદા વટાવી'));
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(document.querySelector('.breadcrumb b').textContent).toBe('Gate Pass & Dispatch');
+    expect(document.querySelector('.breadcrumb b').textContent).toBe('ગેટ પાસ / નિકાલ');
   });
   it('bell shows an empty message and no dot when nothing is pending', async () => {
     mockFetch(routes({ 'GET /yard/nav-counts': { openComplaints: 0, auctionQueue: 0, farmerOverdue: 0, buyerOverdue: 0, dispatchOverdue: 0 } }));
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    await userEvent.click(screen.getByRole('button', { name: 'Reminders' }));
-    expect(screen.getByText('કોઈ pending reminder નથી.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'રિમાઇન્ડર' }));
+    expect(screen.getByText('કોઈ બાકી રિમાઇન્ડર નથી.')).toBeInTheDocument();
     expect(document.querySelector('.bell-dot')).toBeNull();
   });
   it('survives a failing nav-counts request', async () => {
     mockFetch(routes({ 'GET /yard/nav-counts': { status: 500, body: { message: 'x' } } }));
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    await userEvent.click(screen.getByRole('button', { name: 'Reminders' }));
-    expect(screen.getByText('કોઈ pending reminder નથી.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'રિમાઇન્ડર' }));
+    expect(screen.getByText('કોઈ બાકી રિમાઇન્ડર નથી.')).toBeInTheDocument();
   });
   it('polls nav counts every 60 seconds', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -91,7 +93,7 @@ describe('Workspace', () => {
     const onLogout = vi.fn();
     render(<Workspace user={u('admin')} onLogout={onLogout} notify={() => {}}/>);
     await userEvent.click(document.querySelector('.logout-btn'));
-    await userEvent.click(screen.getByTitle('Sign out'));
+    await userEvent.click(screen.getByTitle('સાઇન આઉટ'));
     expect(onLogout).toHaveBeenCalledTimes(2);
   });
   it('mobile menu opens and closes via overlay', async () => {
@@ -100,19 +102,19 @@ describe('Workspace', () => {
     expect(container.querySelector('.sidebar-open')).toBeNull();
     fireEvent.click(container.querySelector('.mobile-trigger'));
     expect(container.querySelector('.sidebar.sidebar-open')).not.toBeNull();
-    await userEvent.click(screen.getByLabelText('Close menu'));
+    await userEvent.click(screen.getByLabelText('મેનુ બંધ કરો'));
     expect(container.querySelector('.sidebar-open')).toBeNull();
   });
   it('global search ignores terms shorter than 2 chars, opens results otherwise, and Escape clears', async () => {
     const f = mockFetch(routes({ 'GET /yard/search?q=ra': { lots: [{ _id: 'l1', lotNumber: 'LOT-1', farmerName: 'Ramesh', commodity: 'ઘઉં', status: 'arrived' }], tickets: [] } }));
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
-    const box = screen.getByLabelText('Global search');
+    const box = screen.getByLabelText('સર્વત્ર શોધ');
     await userEvent.type(box, 'r{enter}');
     expect(f.calls.some(c => c.path.startsWith('/yard/search'))).toBe(false);
     await userEvent.type(box, 'a{enter}');
-    expect(await screen.findByText('Search results · ra')).toBeInTheDocument();
+    expect(await screen.findByText('શોધ પરિણામો · ra')).toBeInTheDocument();
     expect(await screen.findByText('LOT-1')).toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('Close'));
+    await userEvent.click(screen.getByLabelText('બંધ કરો'));
     await userEvent.type(box, '{Escape}');
     expect(box).toHaveValue('');
   });
@@ -120,22 +122,22 @@ describe('Workspace', () => {
     mockFetch(routes());
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={() => {}}/>);
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-    expect(screen.getByLabelText('Global search')).toHaveFocus();
+    expect(screen.getByLabelText('સર્વત્ર શોધ')).toHaveFocus();
   });
   it('opens a lot from search results, and reports lot load errors', async () => {
     const lotRoutes = (lotResp) => routes({ 'GET /yard/search?q=ra': { lots: [{ _id: 'l1', lotNumber: 'LOT-1', farmerName: 'Ramesh', commodity: 'ઘઉં', status: 'arrived' }], tickets: [] }, 'GET /yard/lots/l1': lotResp });
     mockFetch(lotRoutes({ item: { lotNumber: 'LOT-1', farmerName: 'Ramesh', commodity: 'ઘઉં', bags: 1, status: 'arrived' }, weighments: [] }));
     const notify = vi.fn();
     const { unmount } = render(<Workspace user={u('admin')} onLogout={() => {}} notify={notify}/>);
-    await userEvent.type(screen.getByLabelText('Global search'), 'ra{enter}');
+    await userEvent.type(screen.getByLabelText('સર્વત્ર શોધ'), 'ra{enter}');
     await userEvent.click(await screen.findByRole('button', { name: 'ખોલો' }));
-    expect(await screen.findByText('Lot traceability · LOT-1')).toBeInTheDocument();
+    expect(await screen.findByText('લોટનો સંપૂર્ણ ઇતિહાસ · LOT-1')).toBeInTheDocument();
     unmount();
     mockFetch(lotRoutes({ status: 404, body: { message: 'Lot not found' } }));
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={notify}/>);
-    await userEvent.type(screen.getByLabelText('Global search'), 'ra{enter}');
+    await userEvent.type(screen.getByLabelText('સર્વત્ર શોધ'), 'ra{enter}');
     await userEvent.click(await screen.findByRole('button', { name: 'ખોલો' }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Lot not found', 'error'));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith(translateServerMessage('Lot not found'), 'error'));
   });
   it('opens a ticket from search and lets an admin void it, refreshing counts', async () => {
     const ticket = { _id: 't1', ticketNumber: 'APMC-1', quantity: 5, rate: 100, createdAt: '2026-03-05T10:00:00Z', lot: { farmerName: 'R', commodity: 'ઘઉં', lotNumber: 'LOT-1' }, buyer: { name: 'P' } };
@@ -143,14 +145,14 @@ describe('Workspace', () => {
     vi.spyOn(window, 'prompt').mockReturnValue('rate typed wrongly');
     const notify = vi.fn();
     render(<Workspace user={u('admin')} onLogout={() => {}} notify={notify}/>);
-    await userEvent.type(screen.getByLabelText('Global search'), 'ap{enter}');
+    await userEvent.type(screen.getByLabelText('સર્વત્ર શોધ'), 'ap{enter}');
     await userEvent.click(await screen.findByRole('button', { name: 'કાપલી' }));
-    expect(await screen.findByText('Auction ticket · APMC-1')).toBeInTheDocument();
+    expect(await screen.findByText('હરાજી ટિકિટ · APMC-1')).toBeInTheDocument();
     const before = f.calls.filter(c => c.path === '/yard/nav-counts').length;
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel ticket' }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Ticket cancel થઈ ગઈ.'));
+    await userEvent.click(screen.getByRole('button', { name: 'ટિકિટ રદ કરો' }));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('ટિકિટ રદ થઈ ગઈ.'));
     expect(f.calls.find(c => c.path === '/yard/tickets/t1/void').body).toEqual({ reason: 'rate typed wrongly' });
     await waitFor(() => expect(f.calls.filter(c => c.path === '/yard/nav-counts').length).toBeGreaterThan(before));
-    expect(screen.queryByText('Auction ticket · APMC-1')).toBeNull();
+    expect(screen.queryByText('હરાજી ટિકિટ · APMC-1')).toBeNull();
   });
 });

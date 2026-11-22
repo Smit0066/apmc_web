@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger.js';
+import { t, translateServerMessage } from '../i18n/index.js';
 
 const SESSION_KEY = 'apmc_yard_session_v1';
 export function getSession() {
@@ -19,7 +20,7 @@ export async function api(path, options = {}) {
   }
   if (!response.ok) {
     logger.warn('API request failed', { method: options.method || 'GET', path: path.split('?')[0], status: response.status });
-    throw new Error(payload.message || `Request failed (${response.status})`);
+    throw new Error(payload.message ? translateServerMessage(payload.message) : t('server.requestFailed', { status: response.status }));
   }
   return payload;
 }
@@ -31,7 +32,7 @@ export async function downloadFile(path, fallbackName = 'download.csv') {
   if (response.status === 401) { clearSession(); window.dispatchEvent(new CustomEvent('apmc:auth-expired')); }
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.message || `Download failed (${response.status})`);
+    throw new Error(payload.message ? translateServerMessage(payload.message) : t('server.downloadFailed', { status: response.status }));
   }
   const blob = await response.blob();
   const name = /filename="([^"]+)"/.exec(response.headers.get('content-disposition') || '')?.[1] || fallbackName;

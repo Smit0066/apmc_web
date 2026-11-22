@@ -4,32 +4,35 @@ import { labelFor, money, number } from '../../utils/format.js';
 import { api, downloadFile } from '../../services/api.js';
 import { StatCard } from '../../components/common/StatCard.jsx';
 import { DataTable } from '../../components/common/DataTable.jsx';
+import { useI18n } from '../../i18n/index.js';
 
-const REPORTS = [['lots','Gate arrival register','Excel / CSV','lots'],['tickets','Auction & ticket register','Ticket-wise','tickets'],['weighments','Weighment register','Gross / tare / net','weighments'],['bills','Sale & settlement','Gross / deductions / net','bills'],['payments','Payment ledger','UTR / receipts','payments'],['complaints','Complaint register','Ageing / resolution','complaints'],['audit','Audit trail','Actor / timestamp','audit']];
+// [dataset key, count key]; the report name / detail come from the translation catalogue (reports.r.<key>[.detail]).
+const REPORTS = ['lots','tickets','weighments','bills','payments','complaints','audit'].map(k => [k, k]);
 
 export function ReportsScreen({user,notify}) {
+  const {t}=useI18n();
   const [catalog,setCatalog]=useState(null);
   useEffect(()=>{api('/yard/reports/catalog').then(setCatalog).catch(()=>{})},[]);
   const reports=REPORTS.filter(r=>r[0]!=='audit'||['admin','inspector'].includes(user?.role));
-  const exportOne=async key=>{try{await downloadFile('/yard/reports/export/'+key,key+'.csv');notify?.('CSV export તૈયાર છે.')}catch(e){notify?.(e.message,'error')}};
+  const exportOne=async key=>{try{await downloadFile('/yard/reports/export/'+key,key+'.csv');notify?.(t('reports.csvReady'))}catch(e){notify?.(e.message,'error')}};
   const exportAll=async()=>{for(const [key] of reports){await exportOne(key);await new Promise(r=>setTimeout(r,350))}};
   const [data,setData]=useState(null);const [from,setFrom]=useState(new Date().toISOString().slice(0,10));const [to,setTo]=useState(new Date().toISOString().slice(0,10));const [error,setError]=useState('');
   const run=useCallback(async()=>{setError('');try{setData(await api('/yard/reports/summary?from='+from+'&to='+to))}catch(e){setError(e.message)}},[from,to]);
   useEffect(()=>{run()},[run]);
-  return <div className="page-stack"><div className="page-head"><div><span className="eyebrow">MANAGEMENT INFORMATION SYSTEM</span><h1>Reports & Analysis</h1><p>Selected date-range પર database-based operational report.</p></div><div className="page-actions"><button className="btn primary" onClick={exportAll}>બધા ડેટા Export</button></div></div>
-    {catalog&&<><div className="metrics-grid"><StatCard label="કુલ lot" value={number(catalog.counts.lots)} note="Arrival register" icon={Package}/><StatCard label="હરાજી ભાવ સરેરાશ" value={money(catalog.kpis.averageRate)} note="પ્રતિ ક્વિન્ટલ" icon={Gavel} tone="blue"/><StatCard label="Gross sale value" value={money(catalog.kpis.grossSales)} note="Sale bill register" icon={ReceiptText}/><StatCard label="Pending payable" value={money(catalog.kpis.pendingPayable)} note="Farmer settlement" icon={Wallet} tone="amber"/></div>
-    <section className="surface-card"><div className="section-title"><div><h2>રિપોર્ટ સેન્ટર</h2><p>પસંદગીનો report CSVમાં export કરો</p></div></div><div className="table-wrap"><table><thead><tr><th>રિપોર્ટ</th><th>Records</th><th>મુખ્ય વિગત</th><th></th></tr></thead><tbody>{reports.map(([key,label,detail,countKey])=><tr key={key}><td>{label}</td><td>{number(catalog.counts[countKey])}</td><td>{detail}</td><td><button className="row-action" onClick={()=>exportOne(key)}>CSV export</button></td></tr>)}</tbody></table></div></section></>}
-    <section className="surface-card report-filter"><label className="field"><span>From</span><input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label className="field"><span>To</span><input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><button className="btn primary" onClick={run}><FileBarChart size={15}/> Generate report</button></section>
+  return <div className="page-stack"><div className="page-head"><div><span className="eyebrow">{t('reports.eyebrow')}</span><h1>{t('reports.title')}</h1><p>{t('reports.intro')}</p></div><div className="page-actions"><button className="btn primary" onClick={exportAll}>{t('reports.exportAll')}</button></div></div>
+    {catalog&&<><div className="metrics-grid"><StatCard label={t('reports.kpi.lots')} value={number(catalog.counts.lots)} note={t('reports.kpi.lots.note')} icon={Package}/><StatCard label={t('reports.kpi.avgRate')} value={money(catalog.kpis.averageRate)} note={t('reports.kpi.avgRate.note')} icon={Gavel} tone="blue"/><StatCard label={t('reports.kpi.gross')} value={money(catalog.kpis.grossSales)} note={t('reports.kpi.gross.note')} icon={ReceiptText}/><StatCard label={t('reports.kpi.pending')} value={money(catalog.kpis.pendingPayable)} note={t('reports.kpi.pending.note')} icon={Wallet} tone="amber"/></div>
+    <section className="surface-card"><div className="section-title"><div><h2>{t('reports.center.title')}</h2><p>{t('reports.center.sub')}</p></div></div><div className="table-wrap"><table><thead><tr><th>{t('reports.col.report')}</th><th>{t('reports.col.records')}</th><th>{t('reports.col.detail')}</th><th></th></tr></thead><tbody>{reports.map(([key,countKey])=><tr key={key}><td>{t('reports.r.'+key)}</td><td>{number(catalog.counts[countKey])}</td><td>{t('reports.r.'+key+'.detail')}</td><td><button className="row-action" onClick={()=>exportOne(key)}>{t('reports.csvExport')}</button></td></tr>)}</tbody></table></div></section></>}
+    <section className="surface-card report-filter"><label className="field"><span>{t('reports.from')}</span><input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label className="field"><span>{t('reports.to')}</span><input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><button className="btn primary" onClick={run}><FileBarChart size={15}/> {t('reports.generate')}</button></section>
     {error&&<div className="inline-error"><AlertCircle size={15}/>{error}</div>}
     {data&&<><div className="metrics-grid">
-      <StatCard label="Gate arrivals" value={number(data.lots)} note="Lots received in period" icon={Package}/>
-      <StatCard label="Auction tickets" value={number(data.tickets)} note="Ticket issue date" icon={Gavel}/>
-      <StatCard label="Sale bills" value={number(data.bills.bills)} note="Bills generated" icon={ReceiptText}/>
-      <StatCard label="Gross sales" value={money(data.bills.gross)} note="Auction × net weight" icon={Wallet}/>
-      <StatCard label="Farmer payable" value={money(data.bills.farmerPayable)} note="Approved bill amount" icon={Users}/>
-      <StatCard label="Farmer paid" value={money(data.bills.farmerPaid)} note="Payment records" icon={CheckCircle2}/>
-      <StatCard label="Complaints" value={number(data.complaints)} note="Complaints opened" icon={AlertCircle}/>
-    </div><section className="surface-card"><div className="section-title"><div><h2>Payment collections by ledger</h2><p>Selected reporting period</p></div></div><DataTable columns={ [[' _id','Ledger type'],['count','Receipts'],['amount','Collected amount']] .map(([a,b])=>[a.trim(),b])} rows={data.payments.map(x=>({...x,_id:labelFor(x._id)}))} empty="આ સમયગાળામાં payment receipt નથી."/></section>
-    <div className="notice-panel"><FileBarChart size={17}/> CSV exports માટે સંબંધિત module માં CSV button ઉપલબ્ધ છે. Excel/PDF financial statements માટે APMC-approved print templates હજી configure કરવાની રહેશે.</div></>}
+      <StatCard label={t('reports.s.arrivals')} value={number(data.lots)} note={t('reports.s.arrivals.note')} icon={Package}/>
+      <StatCard label={t('reports.s.tickets')} value={number(data.tickets)} note={t('reports.s.tickets.note')} icon={Gavel}/>
+      <StatCard label={t('reports.s.bills')} value={number(data.bills.bills)} note={t('reports.s.bills.note')} icon={ReceiptText}/>
+      <StatCard label={t('reports.s.gross')} value={money(data.bills.gross)} note={t('reports.s.gross.note')} icon={Wallet}/>
+      <StatCard label={t('reports.s.payable')} value={money(data.bills.farmerPayable)} note={t('reports.s.payable.note')} icon={Users}/>
+      <StatCard label={t('reports.s.paid')} value={money(data.bills.farmerPaid)} note={t('reports.s.paid.note')} icon={CheckCircle2}/>
+      <StatCard label={t('reports.s.complaints')} value={number(data.complaints)} note={t('reports.s.complaints.note')} icon={AlertCircle}/>
+    </div><section className="surface-card"><div className="section-title"><div><h2>{t('reports.coll.title')}</h2><p>{t('reports.coll.sub')}</p></div></div><DataTable columns={ [[' _id',t('reports.coll.ledger')],['count',t('reports.coll.receipts')],['amount',t('reports.coll.amount')]] .map(([a,b])=>[a.trim(),b])} rows={data.payments.map(x=>({...x,_id:labelFor(x._id)}))} empty={t('reports.coll.empty')}/></section>
+    <div className="notice-panel"><FileBarChart size={17}/> {t('reports.notice')}</div></>}
   </div>;
 }
