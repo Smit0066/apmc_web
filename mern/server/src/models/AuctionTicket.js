@@ -1,0 +1,4 @@
+import mongoose from 'mongoose';
+const o={timestamps:true};
+const TicketSchema=new mongoose.Schema({ticketNumber:{type:String,required:true,unique:true,index:true},lot:{type:mongoose.Schema.Types.ObjectId,ref:'Lot',required:true,unique:true},buyer:{type:mongoose.Schema.Types.ObjectId,ref:'Buyer',required:true},quantity:{type:Number,required:true,min:0.001},rate:{type:Number,required:true,min:0.01},quality:{type:String,default:'FAQ'},method:{type:String,enum:['open_outcry','e_auction','approved_negotiated'],default:'open_outcry'},notes:{type:String,maxlength:2000},farmerPaymentDueAt:Date,dispatchDueAt:Date,buyerCreditDueAt:Date,buyerCreditDays:Number,issuedBy:{type:mongoose.Schema.Types.ObjectId,ref:'User',required:true},voidedAt:Date,voidReason:String},o);
+export default mongoose.models.AuctionTicket||mongoose.model('AuctionTicket',TicketSchema);

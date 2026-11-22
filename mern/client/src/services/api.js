@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger.js';
+
 const SESSION_KEY = 'apmc_yard_session_v1';
 export function getSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
@@ -15,9 +17,9 @@ export async function api(path, options = {}) {
     clearSession();
     window.dispatchEvent(new CustomEvent('apmc:auth-expired'));
   }
-  if (!response.ok) throw new Error(payload.message || `Request failed (${response.status})`);
+  if (!response.ok) {
+    logger.warn('API request failed', { method: options.method || 'GET', path: path.split('?')[0], status: response.status });
+    throw new Error(payload.message || `Request failed (${response.status})`);
+  }
   return payload;
 }
-export const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
-export const number = value => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(Number(value || 0));
-export const dateTime = value => value ? new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
