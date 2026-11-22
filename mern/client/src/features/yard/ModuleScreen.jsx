@@ -29,7 +29,7 @@ export function ModuleScreen({page,user,notify}) {
       })();
       const source=data.items||[];
       setRows(source);setTotal(Number(data.total ?? source.length));
-      if(page==='auction')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+x.commodity})),buyers:extra[1].items.filter(x=>x.active).map(x=>({value:x._id,label:x.name+' · '+x.registrationNo}))});
+      if(page==='auction')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+x.commodity})),buyers:extra[1].items.filter(x=>x.active).map(x=>{const hold=x.ledger?.overdueCount>0,full=x.ledger?.limitFull;return {value:x._id,disabled:hold||full,label:x.name+' · '+x.registrationNo+(hold?' · Credit hold (overdue)':full?' · Purchase limit full':'')}})});
       if(page==='weighment')setOptions({lots:extra[0].items.filter(x=>['auctioned','weighed'].includes(x.status)).map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+labelFor(x.status)}))});
       if(page==='payments')setOptions({bills:extra[0].items.filter(x=>x.status!=='cancelled').map(x=>({value:x._id,label:x.billNumber+' · '+x.farmerName+' · payable '+money(x.farmerNetPayable)}))});
       if(page==='gatepass')setOptions({lots:extra[0].items.map(x=>({value:x._id,label:x.lotNumber+' · '+x.farmerName+' · '+number(x.netWeight)+' Q'}))});
@@ -38,7 +38,8 @@ export function ModuleScreen({page,user,notify}) {
     }catch(e){setError(e.message)}finally{setLoading(false)}
   },[page,cfg.endpoint,pageNum,query]);
   useEffect(()=>{load()},[load]);
-  const filtered=useMemo(()=>query && !['gate','sales','buyerledger'].includes(page) ? rows.filter(item=>JSON.stringify(item).toLowerCase().includes(query.toLowerCase())) : rows,[rows,query,page]);
+  const filtered=useMemo(()=>{const base=query && !['gate','sales','buyerledger'].includes(page) ? rows.filter(item=>JSON.stringify(item).toLowerCase().includes(query.toLowerCase())) : rows;
+    return page==='buyerledger'?base.map(b=>({...b,creditStatus:b.ledger?.overdueCount?b.ledger.overdueCount+' overdue':b.ledger?.limitFull?'Limit full':'Within limit'})):base;},[rows,query,page]);
   const fields = page==='users' && editRow ? [
     field('role','Assigned role','select',{required:true,options:Object.entries(roles).map(([value,label])=>({value,label}))}),
     field('active','Account status','select',{required:true,options:[{value:'true',label:'Active'},{value:'false',label:'Inactive'}]}),
@@ -105,7 +106,7 @@ export function ModuleScreen({page,user,notify}) {
       <div className="table-toolbar"><div className="table-info"><b>{cfg.title}</b><span>{filtered.length} records · Server database</span></div><label className="search-box"><Search size={15}/><input placeholder="રેકોર્ડ શોધો..." value={query} onChange={e=>{setQuery(e.target.value);setPageNum(1)}}/></label></div>
       {error&&<div className="inline-error"><AlertCircle size={15}/>{error}</div>}
       {loading?<div className="loading-panel"><RefreshCw className="spin" size={17}/> Records લાવી રહ્યા છીએ…</div>
-      :<><DataTable columns={cfg.columns} rows={filtered} onRowAction={['gate','auction','sales','gatepass','disputes','users','buyerledger'].includes(page)?rowAction:null} actionLabel={page==='gatepass'?'Exit confirm':page==='disputes'?'Review / Resolve':page==='users'?'Edit role / access':page==='buyerledger'?'Edit credit':'વિગત'}/>
+      :<><DataTable columns={cfg.columns} rows={filtered} onRowAction={['gate','auction','sales','gatepass','disputes','users','buyerledger'].includes(page)?rowAction:null} secondaryAction={page==='auction'?{label:'Print',onClick:t=>setDetail({kind:'ticketprint',data:t})}:page==='gatepass'?{label:'Pass',onClick:p=>setDetail({kind:'passprint',data:p})}:null} actionLabel={page==='gatepass'?'Exit confirm':page==='disputes'?'Review / Resolve':page==='users'?'Edit role / access':page==='buyerledger'?'Edit credit':'વિગત'}/>
         {total>25&&<div className="pagination"><span>{(pageNum-1)*25+1}–{Math.min(pageNum*25,total)} of {total} records</span><div><button className="btn ghost" disabled={pageNum<=1} onClick={()=>setPageNum(v=>Math.max(1,v-1))}>Previous</button><button className="btn ghost" disabled={pageNum>=Math.ceil(total/25)} onClick={()=>setPageNum(v=>v+1)}>Next</button></div></div>}
       </>}
     </section>
@@ -113,6 +114,6 @@ export function ModuleScreen({page,user,notify}) {
     {page==='payments'&&<div className="notice-panel"><Wallet size={17}/> Payment entry actual money transfer કરતી નથી. UTR / external transaction reference verify કર્યા પછી જ receipt નોંધો.</div>}
     {page==='gatepass'&&<div className="notice-panel"><Truck size={17}/> Statutory transit permit અલગ requirement હોઈ શકે છે. આ module yard exit control record આપે છે; APMC-approved permit processનું replacement નથી.</div>}
     {formOpen&&<FormDialog title={editRow?(page==='users'?'Staff role / access સુધારો':'વેપારી credit policy સુધારો'):cfg.createLabel} fields={fields} initialValues={editRow||{}} onClose={()=>{setFormOpen(false);setEditRow(null)}} onSubmit={create} busy={busy} submitLabel="સાચવો"/>}
-    {detail&&<DetailModal detail={detail} user={user} onClose={()=>setDetail(null)} onVoidTicket={async(ticket,reason)=>{await api('/yard/tickets/'+ticket._id+'/void',{method:'POST',body:{reason}});notify('Auction ticket cancel થઈ. Lot ફરી auction queue માં ઉપલબ્ધ છે.');setDetail(null);await load();}}/>}
+    {detail&&<DetailModal detail={detail} user={user} onPrint={t=>setDetail({kind:'ticketprint',data:t})} onClose={()=>setDetail(null)} onVoidTicket={async(ticket,reason)=>{await api('/yard/tickets/'+ticket._id+'/void',{method:'POST',body:{reason}});notify('Auction ticket cancel થઈ. Lot ફરી auction queue માં ઉપલબ્ધ છે.');setDetail(null);await load();}}/>}
   </div>;
 }

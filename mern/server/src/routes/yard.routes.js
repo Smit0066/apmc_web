@@ -8,7 +8,9 @@ import { listWeighments, createWeighment } from '../controllers/weighments.contr
 import { listBills, listPayments, createPayment } from '../controllers/billing.controller.js';
 import { listGatePasses, issuePass, dispatchPass } from '../controllers/gatePasses.controller.js';
 import { listComplaints, createComplaint, updateComplaint } from '../controllers/complaints.controller.js';
-import { getSummary } from '../controllers/reports.controller.js';
+import { getSummary, getCatalog, exportDataset } from '../controllers/reports.controller.js';
+import { getDashboard, getNavCounts } from '../controllers/dashboard.controller.js';
+import { search } from '../controllers/search.controller.js';
 import { getSettings, updateSettings } from '../controllers/settings.controller.js';
 import { listUsers, createUser, updateUser } from '../controllers/users.controller.js';
 import { listAuditLogs } from '../controllers/audit.controller.js';
@@ -21,6 +23,9 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/overview', getOverview);
+router.get('/dashboard', getDashboard);
+router.get('/nav-counts', getNavCounts);
+router.get('/search', search);
 
 // Gate entries / lots
 router.get('/lots', listLots);
@@ -58,6 +63,10 @@ router.patch('/complaints/:id', allowRoles('admin','inspector'), updateComplaint
 
 // Reports
 router.get('/reports/summary', getSummary);
+router.get('/reports/catalog', getCatalog);
+// Audit export keeps the same role restriction as GET /audit.
+router.get('/reports/export/audit', allowRoles('admin','inspector'), exportDataset);
+router.get('/reports/export/:dataset', exportDataset);
 
 // Settings / master data
 router.get('/settings', getSettings);

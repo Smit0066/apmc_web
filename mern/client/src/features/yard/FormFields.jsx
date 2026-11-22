@@ -6,7 +6,7 @@ export function FormFieldsFor(page,options) {
     field('sellerType','વેચનારનો પ્રકાર','select',{required:true,options:[{value:'farmer',label:'ખેડૂત'},{value:'trader',label:'વેપારી / Registered seller'}],defaultValue:'farmer'}),
     field('farmerName','ખેડૂત / વેચનારનું નામ','text',{required:true}),
     field('mobile','મોબાઇલ નંબર','text',{required:true,placeholder:'10 અંકનો નંબર'}),
-    field('state','રાજ્ય','text',{defaultValue:'Gujarat'}),field('district','જિલ્લો'),field('taluka','તાલુકો'),field('village','ગામ'),
+    field('state','રાજ્ય','text',{required:true,defaultValue:'Gujarat'}),field('district','જિલ્લો'),field('taluka','તાલુકો'),field('village','ગામ','text',{required:true}),
     field('farmerRegistryId','Farmer Registry ID'),field('landRecordType','Land record પ્રકાર','select',{options:['7/12','8A','Khasra / Khatauni','RTC / Pahani','Patta','RoR / Survey','Not available'].map(x=>({value:x,label:x}))}),
     field('landRecordNo','Survey / Land Record નંબર'),field('traderRegistrationNo','Trader Registration / Licence ID'),
     field('commodity','પાક / Commodity','select',{required:true,options:options.commodities||[]}),

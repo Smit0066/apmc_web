@@ -7,10 +7,11 @@ import { money, number } from '../../utils/format.js';
 import { api } from '../../services/api.js';
 import { StatCard } from '../../components/common/StatCard.jsx';
 import { DataTable } from '../../components/common/DataTable.jsx';
+import { YardLive } from './YardLive.jsx';
 
 export function Dashboard({user,onNavigate}) {
-  const [stats,setStats]=useState(null);const [lots,setLots]=useState([]);const [error,setError]=useState('');const [loading,setLoading]=useState(true);
-  const load=useCallback(async()=>{setLoading(true);setError('');try{const [summary,latest]=await Promise.all([api('/yard/overview'),api('/yard/lots?limit=6')]);setStats(summary.stats);setLots(latest.items)}catch(e){setError(e.message)}finally{setLoading(false)}},[]);
+  const [stats,setStats]=useState(null);const [lots,setLots]=useState([]);const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [live,setLive]=useState(null);
+  const load=useCallback(async()=>{setLoading(true);setError('');try{const [summary,latest,liveData]=await Promise.all([api('/yard/overview'),api('/yard/lots?limit=6'),api('/yard/dashboard')]);setStats(summary.stats);setLots(latest.items);setLive(liveData)}catch(e){setError(e.message)}finally{setLoading(false)}},[]);
   useEffect(()=>{load()},[load]);
   const values=stats||{};
   return <div className="page-stack">
@@ -41,6 +42,7 @@ export function Dashboard({user,onNavigate}) {
           <button className="btn secondary full-width" onClick={()=>onNavigate('payments')}>Open settlement ledger <ArrowRight size={15}/></button>
         </section>
       </div>
+      {live&&<YardLive live={live} onNavigate={onNavigate}/>}
       <section className="surface-card"><div className="section-title"><div><h2>Quick Actions</h2><p>તમારા role પ્રમાણે ઉપલબ્ધ કામ</p></div></div><div className="quick-actions">
         {navigation.filter(n=>n.id!=='dashboard'&&n.roles.includes(user.role)).slice(0,6).map(n=><button key={n.id} onClick={()=>onNavigate(n.id)}><n.icon size={19}/><span>{n.sub}</span><ArrowRight size={14}/></button>)}
       </div></section>

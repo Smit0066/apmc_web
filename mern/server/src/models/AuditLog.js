@@ -5,4 +5,7 @@ AuditSchema.pre('findOneAndUpdate',function(){throw new Error('Audit logs are ap
 AuditSchema.pre('updateOne',function(){throw new Error('Audit logs are append-only')});
 AuditSchema.pre('deleteOne',function(){throw new Error('Audit logs are append-only')});
 AuditSchema.pre('deleteMany',function(){throw new Error('Audit logs are append-only')});
+for(const op of ['updateMany','replaceOne','findOneAndReplace','findOneAndDelete'])AuditSchema.pre(op,function(){throw new Error('Audit logs are append-only')});
+AuditSchema.pre('save',function(){if(!this.isNew)throw new Error('Audit logs are append-only')});
+AuditSchema.pre('deleteOne',{document:true,query:false},function(){throw new Error('Audit logs are append-only')});
 export default mongoose.models.AuditLog||mongoose.model('AuditLog',AuditSchema);

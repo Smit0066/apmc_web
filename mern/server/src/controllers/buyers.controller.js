@@ -1,9 +1,10 @@
-import { Buyer, SaleBill } from '../models/index.js';
+import { Buyer } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { fail } from '../utils/httpError.js';
 import { cleanPage } from '../utils/pagination.js';
 import { isId } from '../utils/validation.js';
 import { audit, auditContext } from '../services/audit.service.js';
+import { computeBuyerLedgers } from '../services/buyerLedger.service.js';
 
 export const listBuyers = asyncHandler(async (req, res) => {
   const filter = {};
@@ -16,12 +17,9 @@ export const listBuyers = asyncHandler(async (req, res) => {
     Buyer.find(filter).sort({ name: 1 }).skip((page - 1) * limit).limit(limit).lean(),
     Buyer.countDocuments(filter)
   ]);
-  const bills = await SaleBill.aggregate([{ $match: { status: { $ne: 'cancelled' } } }, { $group: {
-    _id: '$buyer', gross: { $sum: '$grossAmount' }, paid: { $sum: '$buyerPurchasePaid' },
-    dueFees: { $sum: { $subtract: [{ $add: ['$buyerMarketFee','$buyerOtherDues'] }, '$buyerDuesPaid'] } }
-  } }]);
-  const balances = new Map(bills.map(x => [String(x._id), x]));
-  res.json({ items: items.map(x => ({ ...x, ledger: balances.get(String(x._id)) || { gross: 0, paid: 0, dueFees: 0 } })), total, page, limit });
+  const ledgers = await computeBuyerLedgers(items);
+  const empty = { gross: 0, paid: 0, dueFees: 0, outstanding: 0, exposure: 0, overdueCount: 0, limitFull: false };
+  res.json({ items: items.map(x => ({ ...x, ledger: ledgers.get(String(x._id)) || empty })), total, page, limit });
 });
 
 export const createBuyer = asyncHandler(async (req, res) => {

@@ -18,7 +18,7 @@ export function FormDialog({title,fields,initialValues={},onClose,onSubmit,submi
           <span>{f.label}{f.required&&<em> *</em>}</span>
           {f.type==='textarea' ? <textarea rows={3} required={f.required} maxLength={f.maxLength} placeholder={f.placeholder||''} value={values[f.key]} onChange={e=>change(f.key,e.target.value)}/>
           : f.type==='select' ? <select required={f.required} value={values[f.key]} onChange={e=>change(f.key,e.target.value)}>
-              <option value="">પસંદ કરો</option>{(f.options||[]).map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+              <option value="">પસંદ કરો</option>{(f.options||[]).map(o=><option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>)}
             </select>
           : <input type={f.type==='number'?'number':f.type==='password'?'password':f.type==='email'?'email':'text'} required={f.required} min={f.min} max={f.max} step={f.step} maxLength={f.maxLength} placeholder={f.placeholder||''} value={values[f.key]} onChange={e=>change(f.key,f.type==='checkbox'?e.target.checked:e.target.value)}/>}
           {f.hint&&<small>{f.hint}</small>}
