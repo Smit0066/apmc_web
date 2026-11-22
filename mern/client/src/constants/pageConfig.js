@@ -34,7 +34,7 @@ export const pageConfig = {
   buyerledger: {
     title: 'Buyer Ledger & Credit Control', subtitle: 'Trader registration, approved purchase limit, credit days અને outstanding.',
     endpoint: '/yard/buyers', createLabel: 'નવો વેપારી', createRoles: ['admin','accounts'],
-    columns: [['name','વેપારી'],['registrationNo','Licence / Reg ID'],['creditDays','Credit days'],['purchaseLimit','Purchase limit'],['ledger.gross','ખરીદ કિંમત'],['ledger.paid','ચૂકવેલ'],['active','Active']]
+    columns: [['name','વેપારી'],['registrationNo','Licence / Reg ID'],['creditDays','Credit days'],['purchaseLimit','Purchase limit'],['ledger.gross','ખરીદ કિંમત'],['ledger.paid','ચૂકવેલ'],['ledger.outstanding','બાકી (bills)'],['ledger.exposure','કુલ exposure'],['creditStatus','Credit status'],['active','Active']]
   },
   gatepass: {
     title: 'Gate Pass & Dispatch Control', subtitle: 'Farmer settlement અને buyer dues clear થયા પછી જ yard exit pass.',

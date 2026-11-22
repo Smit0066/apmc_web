@@ -23,3 +23,20 @@ export async function api(path, options = {}) {
   }
   return payload;
 }
+
+/** Authenticated download (CSV exports) — the token cannot travel via a plain <a href>. */
+export async function downloadFile(path, fallbackName = 'download.csv') {
+  const session = getSession();
+  const response = await fetch(`/api${path}`, { headers: session?.token ? { Authorization: `Bearer ${session.token}` } : {} });
+  if (response.status === 401) { clearSession(); window.dispatchEvent(new CustomEvent('apmc:auth-expired')); }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message || `Download failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  const name = /filename="([^"]+)"/.exec(response.headers.get('content-disposition') || '')?.[1] || fallbackName;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = name; link.click();
+  URL.revokeObjectURL(url);
+}

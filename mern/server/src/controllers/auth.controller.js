@@ -7,7 +7,8 @@ import { logger } from '../utils/logger.js';
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
+  // Strings only: a non-string password makes bcrypt throw (500) and an object email could smuggle query operators.
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) return res.status(400).json({ message: 'Email and password are required' });
   if (!env.jwtSecret) {
     logger.error('Login attempted but JWT_SECRET is not configured');
     return res.status(500).json({ message: 'Server authentication is not configured' });

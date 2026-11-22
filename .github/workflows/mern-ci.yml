@@ -27,6 +27,9 @@ jobs:
       - name: Run server unit tests
         working-directory: mern
         run: npm run test -w server
+      - name: Run client tests
+        working-directory: mern
+        run: npm run test -w client
       - name: Build React frontend
         working-directory: mern
         run: npm run build -w client

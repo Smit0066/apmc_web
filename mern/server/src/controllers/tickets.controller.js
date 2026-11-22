@@ -1,5 +1,6 @@
 import { AuctionTicket } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { fail } from '../utils/httpError.js';
 import { cleanPage } from '../utils/pagination.js';
 import { auditContext } from '../services/audit.service.js';
 import { issueTicket, voidTicket } from '../services/ticket.service.js';
@@ -14,8 +15,10 @@ export const listTickets = asyncHandler(async (req, res) => {
 });
 
 export const createTicket = asyncHandler(async (req, res) => {
-  const ticket = await issueTicket(auditContext(req), req.body);
-  res.status(201).json({ item: ticket });
+  try {
+    const ticket = await issueTicket(auditContext(req), req.body);
+    res.status(201).json({ item: ticket });
+  } catch (error) { if (error.code === 11000) throw fail(409, 'Lot is not available for auction'); throw error; }
 });
 
 export const voidTicketHandler = asyncHandler(async (req, res) => {

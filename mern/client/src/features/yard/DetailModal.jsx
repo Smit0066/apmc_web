@@ -1,9 +1,13 @@
 import { Printer } from 'lucide-react';
 import { labelFor, money, number, dateTime } from '../../utils/format.js';
 import { Modal } from '../../components/common/Modal.jsx';
+import { TicketPrint } from '../../components/common/TicketPrint.jsx';
+import { GatePassPrint } from '../../components/common/GatePassPrint.jsx';
 
-export function DetailModal({detail,onClose,user,onVoidTicket}) {
+export function DetailModal({detail,onClose,user,onVoidTicket,onPrint}) {
   const {kind,data}=detail;
+  if(kind==='ticketprint')return <Modal title={'ભાવ-કાપલી · '+data.ticketNumber} onClose={onClose} wide><TicketPrint ticket={data}/></Modal>;
+  if(kind==='passprint')return <Modal title={'Gate pass · '+data.passNumber} onClose={onClose} wide><GatePassPrint pass={data}/></Modal>;
   let title='Transaction detail';
   if(kind==='lot')title='Lot traceability · '+data.item.lotNumber;
   if(kind==='ticket')title='Auction ticket · '+data.ticketNumber;
@@ -30,6 +34,6 @@ export function DetailModal({detail,onClose,user,onVoidTicket}) {
   ];
   return <Modal title={title} onClose={onClose} wide><div className="detail-grid">{rows.filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=><div className="detail-cell" key={k}><small>{k}</small><b>{v}</b></div>)}</div>
     {kind==='lot'&&<><h3 className="subsection-title">Transaction Timeline</h3><div className="timeline-list">{[['Gate entry',true],['Auction ticket',!!data.ticket],['Weighment',!!data.weighments?.length],['Sale bill',!!data.bill],['Farmer settlement',data.bill?.status==='paid'],['Gate pass',!!data.pass],['Dispatch',data.pass?.status==='dispatched']].map(([name,done])=><div key={name}><span className={done?'timeline-dot done':'timeline-dot'}/><b>{name}</b><small>{done?'Completed':'Pending'}</small></div>)}</div></>}
-    <div className="form-actions">{kind==='ticket'&&user?.role==='admin'&&<button className="btn danger" onClick={async()=>{const reason=window.prompt('Ticket cancellation / correction reason (minimum 8 characters):');if(reason&&reason.trim().length>=8){try{await onVoidTicket(data,reason.trim())}catch(error){window.alert(error.message)}}}}>Cancel ticket</button>}<button className="btn ghost" onClick={onClose}>Close</button><button className="btn primary" onClick={()=>window.print()}><Printer size={15}/> Print</button></div>
+    <div className="form-actions">{kind==='ticket'&&onPrint&&<button className="btn secondary" onClick={()=>onPrint(data)}><Printer size={15}/> Print ticket</button>}{kind==='ticket'&&user?.role==='admin'&&<button className="btn danger" onClick={async()=>{const reason=window.prompt('Ticket cancellation / correction reason (minimum 8 characters):');if(reason&&reason.trim().length>=8){try{await onVoidTicket(data,reason.trim())}catch(error){window.alert(error.message)}}}}>Cancel ticket</button>}<button className="btn ghost" onClick={onClose}>Close</button><button className="btn primary" onClick={()=>window.print()}><Printer size={15}/> Print</button></div>
   </Modal>;
 }

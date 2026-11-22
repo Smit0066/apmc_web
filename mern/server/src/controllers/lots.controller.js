@@ -21,6 +21,7 @@ export const listLots = asyncHandler(async (req, res) => {
     filter.arrivalAt = {};
     if (req.query.from) filter.arrivalAt.$gte = new Date(req.query.from);
     if (req.query.to) filter.arrivalAt.$lte = new Date(req.query.to);
+    if (Object.values(filter.arrivalAt).some(d => Number.isNaN(d.getTime()))) throw fail(400, 'Invalid date filter');
   }
   const [items, total] = await Promise.all([
     Lot.find(filter).populate('buyerId','name registrationNo').populate('createdBy','name role')

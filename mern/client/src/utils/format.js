@@ -1,3 +1,4 @@
+import { deadlineLabel } from './time.js';
 export const labelFor = value => ({
   arrived:'આવક નોંધાઈ',auctioned:'હરાજી પૂર્ણ',weighed:'તોલ પૂર્ણ',payment_pending:'ચુકવણી બાકી',
   part_paid:'આંશિક ચુકવણી',paid:'ચુકવણી પૂર્ણ',dispatched:'માલ રવાના',held:'Hold',
@@ -9,8 +10,9 @@ export const labelFor = value => ({
 export const getPath = (obj,path) => path.split('.').reduce((v,k)=>v?.[k],obj);
 export const textValue = (value,key) => {
   if (value === null || value === undefined || value === '') return '—';
-  if (key.toLowerCase().includes('amount') || ['grossAmount','farmerNetPayable','purchaseLimit','gross','rate','amount','ledger.gross','ledger.paid'].includes(key)) return money(value);
-  if (key.toLowerCase().includes('at') || key === 'lastLoginAt') return dateTime(value);
+  if (key.endsWith('DueAt')) return dateTime(value) + ' · ' + deadlineLabel(value);
+  if (key.toLowerCase().includes('amount') || ['grossAmount','farmerNetPayable','purchaseLimit','gross','rate','amount','ledger.gross','ledger.paid','ledger.outstanding','ledger.exposure'].includes(key)) return money(value);
+  if (/At$/.test(key)) return dateTime(value);
   if (key === 'active') return value ? 'હા' : 'ના';
   if (key === 'sellerType') return value === 'trader' ? 'વેપારી' : 'ખેડૂત';
   if (key === 'status' || key === 'type' || key === 'role' || key === 'method') return labelFor(value);
