@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ModuleScreen } from './ModuleScreen.jsx';
 import { pageConfig } from '../../constants/pageConfig.js';
+import { t, translateServerMessage } from '../../i18n/index.js';
 import { mockFetch } from '../../test/mockFetch.js';
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -14,10 +15,10 @@ describe('ModuleScreen – common behaviour', () => {
   it('loads rows, shows title, count and status labels (not dates)', async () => {
     mockFetch({ 'GET /yard/lots?page=1&limit=25': { items: [lot], total: 1 }, 'GET /yard/settings': { item: { commodities: ['ઘઉં'] } } });
     render(<ModuleScreen page="gate" user={admin} notify={() => {}}/>);
-    expect(screen.getByText(/Records લાવી રહ્યા/)).toBeInTheDocument();
+    expect(screen.getByText(/રેકોર્ડ લાવી રહ્યા/)).toBeInTheDocument();
     expect(await screen.findByText('LOT-1')).toBeInTheDocument();
-    expect(screen.getByText('Gate Entry Register', { selector: 'h1' })).toBeInTheDocument();
-    expect(screen.getByText('1 records · Server database')).toBeInTheDocument();
+    expect(screen.getByText('ગેટ એન્ટ્રી અને આવક', { selector: 'h1' })).toBeInTheDocument();
+    expect(screen.getByText('1 રેકોર્ડ · સર્વર ડેટાબેઝ')).toBeInTheDocument();
     expect(screen.getByText('આવક નોંધાઈ')).toBeInTheDocument();
   });
   it('shows load errors and the empty state', async () => {
@@ -49,14 +50,14 @@ describe('ModuleScreen – common behaviour', () => {
     const f = mockFetch({ 'GET /yard/audit?page=1&limit=25': { items: [{ _id: 'a', action: 'P1' }], total: 60 }, 'GET /yard/audit?page=2&limit=25': { items: [{ _id: 'b', action: 'P2' }], total: 60 }, 'GET /yard/audit?page=3&limit=25': { items: [{ _id: 'c', action: 'P3' }], total: 60 } });
     render(<ModuleScreen page="audit" user={admin} notify={() => {}}/>);
     await screen.findByText('P1');
-    expect(screen.getByText('1–25 of 60 records')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('60 માંથી 1–25 રેકોર્ડ')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'પાછળ' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'આગળ' }));
     await screen.findByText('P2');
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'આગળ' }));
     await screen.findByText('P3');
-    expect(screen.getByText('51–60 of 60 records')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByText('60 માંથી 51–60 રેકોર્ડ')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'આગળ' })).toBeDisabled();
     expect(f.calls.map(c => c.path)).toEqual(expect.arrayContaining(['/yard/audit?page=3&limit=25']));
   });
   it('hides the create button for roles that cannot create', async () => {
@@ -71,7 +72,7 @@ describe('ModuleScreen – common behaviour', () => {
       // fall back to a catch-all fetch: every GET returns an empty list
       vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ items: [], total: 0, item: { commodities: [] } }), { headers: { 'Content-Type': 'application/json' } })));
       const { unmount } = render(<ModuleScreen page={page} user={admin} notify={() => {}}/>);
-      expect(await screen.findByText(pageConfig[page].title, { selector: 'h1' })).toBeInTheDocument();
+      expect(await screen.findByText(t(pageConfig[page].titleKey), { selector: 'h1' })).toBeInTheDocument();
       await screen.findByText('કોઈ રેકોર્ડ મળ્યો નથી.');
       unmount();
     }
@@ -87,7 +88,7 @@ describe('ModuleScreen – gate entry', () => {
     await userEvent.type(screen.getByLabelText(/ખેડૂત \/ વેચનારનું નામ/), 'Ramesh');
     await userEvent.type(screen.getByLabelText(/મોબાઇલ નંબર/), '9879512041');
     await userEvent.type(screen.getByLabelText(/^ગામ/), 'Kamrej');
-    await userEvent.selectOptions(screen.getByLabelText(/પાક \/ Commodity/), 'કપાસ');
+    await userEvent.selectOptions(screen.getByLabelText(/પાક \/ જણસ/), 'કપાસ');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
     await waitFor(() => expect(notify).toHaveBeenCalledWith('રેકોર્ડ સફળતાપૂર્વક સાચવાયો.'));
     const post = f.calls.find(c => c.method === 'POST');
@@ -101,23 +102,24 @@ describe('ModuleScreen – gate entry', () => {
     await userEvent.type(screen.getByLabelText(/ખેડૂત \/ વેચનારનું નામ/), 'R');
     await userEvent.type(screen.getByLabelText(/મોબાઇલ નંબર/), 'abc');
     await userEvent.type(screen.getByLabelText(/^ગામ/), 'K');
-    await userEvent.selectOptions(screen.getByLabelText(/પાક \/ Commodity/), 'ઘઉં');
+    await userEvent.selectOptions(screen.getByLabelText(/પાક \/ જણસ/), 'ઘઉં');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
-    expect(await screen.findByText('Enter a valid contact number')).toBeInTheDocument();
+    // API messages are translated centrally (services/api.js); assert the translation for the active language.
+    expect(await screen.findByText(translateServerMessage('Enter a valid contact number'))).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
   it('row action opens the lot traceability modal', async () => {
     mockFetch({ 'GET /yard/lots?page=1&limit=25': { items: [lot], total: 1 }, 'GET /yard/settings': { item: { commodities: [] } }, 'GET /yard/lots/l1': { item: lot, weighments: [] } });
     render(<ModuleScreen page="gate" user={admin} notify={() => {}}/>);
     await userEvent.click(await screen.findByRole('button', { name: /વિગત/ }));
-    expect(await screen.findByText('Lot traceability · LOT-1')).toBeInTheDocument();
+    expect(await screen.findByText('લોટનો સંપૂર્ણ ઇતિહાસ · LOT-1')).toBeInTheDocument();
   });
   it('notifies when the lot detail fails to load', async () => {
     mockFetch({ 'GET /yard/lots?page=1&limit=25': { items: [lot], total: 1 }, 'GET /yard/settings': { item: { commodities: [] } }, 'GET /yard/lots/l1': { status: 404, body: { message: 'Lot not found' } } });
     const notify = vi.fn();
     render(<ModuleScreen page="gate" user={admin} notify={notify}/>);
     await userEvent.click(await screen.findByRole('button', { name: /વિગત/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Lot not found', 'error'));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith(translateServerMessage('Lot not found'), 'error'));
   });
 });
 
@@ -129,8 +131,8 @@ describe('ModuleScreen – auction', () => {
     mockFetch(routes());
     render(<ModuleScreen page="auction" user={admin} notify={() => {}}/>);
     await userEvent.click(await screen.findByRole('button', { name: /નવી ભાવ-કાપલી/ }));
-    expect(screen.getByRole('option', { name: /Held.*Credit hold/ })).toBeDisabled();
-    expect(screen.getByRole('option', { name: /Full.*Purchase limit full/ })).toBeDisabled();
+    expect(screen.getByRole('option', { name: /Held.*ક્રેડિટ હોલ્ડ/ })).toBeDisabled();
+    expect(screen.getByRole('option', { name: /Full.*ખરીદ મર્યાદા પૂર્ણ/ })).toBeDisabled();
     expect(screen.getByRole('option', { name: /Patel/ })).toBeEnabled();
     expect(screen.queryByRole('option', { name: /Off/ })).toBeNull();
   });
@@ -138,8 +140,8 @@ describe('ModuleScreen – auction', () => {
     const f = mockFetch(routes({ 'POST /yard/tickets': { item: {} } }));
     render(<ModuleScreen page="auction" user={admin} notify={() => {}}/>);
     await userEvent.click(await screen.findByRole('button', { name: /નવી ભાવ-કાપલી/ }));
-    await userEvent.selectOptions(screen.getByLabelText(/Auction માટે Lot/), 'l1');
-    await userEvent.selectOptions(screen.getByLabelText(/Registered buyer/), 'b1');
+    await userEvent.selectOptions(screen.getByLabelText(/હરાજી માટે લોટ પસંદ કરો/), 'l1');
+    await userEvent.selectOptions(screen.getByLabelText(/નોંધાયેલ ખરીદદાર/), 'b1');
     await userEvent.type(screen.getByLabelText(/હરાજી ભાવ/), '2500');
     await userEvent.type(screen.getByLabelText(/જથ્થો/), '15');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
@@ -149,7 +151,7 @@ describe('ModuleScreen – auction', () => {
   it('row action opens ticket detail; Print opens the print view', async () => {
     mockFetch(routes({ 'GET /yard/settings': { item: {} } }));
     render(<ModuleScreen page="auction" user={admin} notify={() => {}}/>);
-    await userEvent.click(await screen.findByRole('button', { name: 'Print' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'પ્રિન્ટ' }));
     expect(await screen.findByText('ભાવ-કાપલી · APMC-1')).toBeInTheDocument();
   });
   it('admin voids a ticket from the detail modal', async () => {
@@ -158,7 +160,7 @@ describe('ModuleScreen – auction', () => {
     const notify = vi.fn();
     render(<ModuleScreen page="auction" user={admin} notify={notify}/>);
     await userEvent.click(await screen.findByRole('button', { name: /વિગત/ }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Cancel ticket' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'ટિકિટ રદ કરો' }));
     await waitFor(() => expect(f.calls.find(c => c.path === '/yard/tickets/t1/void').body).toEqual({ reason: 'entered wrong rate' }));
     await waitFor(() => expect(notify).toHaveBeenCalled());
   });
@@ -173,21 +175,21 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     expect(screen.getByRole('option', { name: /LOT-1/ })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /LOT-3/ })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /LOT-2/ })).toBeNull();
-    await userEvent.selectOptions(screen.getByLabelText(/Weighment માટે Lot/), 'l1');
-    await userEvent.type(screen.getByLabelText(/Gross weight/), '18');
-    await userEvent.type(screen.getByLabelText(/Tare weight/), '3');
+    await userEvent.selectOptions(screen.getByLabelText(/વજન માટે લોટ/), 'l1');
+    await userEvent.type(screen.getByLabelText(/કુલ વજન/), '18');
+    await userEvent.type(screen.getByLabelText(/ટેર વજન/), '3');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
     await waitFor(() => expect(f.calls.some(c => c.method === 'POST')).toBe(true));
     expect(f.calls.find(c => c.method === 'POST').body).toMatchObject({ lotId: 'l1', gross: '18', tare: '3' });
-    expect(screen.getByText(/Scale hardware/)).toBeInTheDocument();
+    expect(screen.getByText(/કાંટાનું હાર્ડવેર/)).toBeInTheDocument();
   });
   it('payments: excludes cancelled bills and posts a payment', async () => {
     const f = mockFetch({ 'GET /yard/payments?page=1&limit=25': { items: [], total: 0 }, 'GET /yard/bills?limit=100': { items: [{ _id: 'b1', billNumber: 'SB-1', farmerName: 'R', farmerNetPayable: 1000, status: 'payment_pending' }, { _id: 'b2', billNumber: 'SB-2', farmerName: 'X', farmerNetPayable: 5, status: 'cancelled' }] }, 'POST /yard/payments': { payment: {} } });
     render(<ModuleScreen page="payments" user={admin} notify={() => {}}/>);
     await userEvent.click(await screen.findByRole('button', { name: /ચુકવણી નોંધો/ }));
     expect(screen.queryByRole('option', { name: /SB-2/ })).toBeNull();
-    await userEvent.selectOptions(screen.getByLabelText(/Sale bill પસંદ કરો/), 'b1');
-    await userEvent.selectOptions(screen.getByLabelText(/ચુકવણીનો ledger/), 'farmer_settlement');
+    await userEvent.selectOptions(screen.getByLabelText(/વેચાણ બિલ પસંદ કરો/), 'b1');
+    await userEvent.selectOptions(screen.getByLabelText(/ચુકવણીનું ખાતું/), 'farmer_settlement');
     await userEvent.type(screen.getByLabelText(/ચુકવણી રકમ/), '1000');
     await userEvent.selectOptions(screen.getByLabelText(/માધ્યમ/), 'NEFT');
     await userEvent.type(screen.getByLabelText(/UTR/), 'UTR123456');
@@ -201,13 +203,13 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
     const notify = vi.fn();
     render(<ModuleScreen page="gatepass" user={admin} notify={notify}/>);
-    await userEvent.click(await screen.findByRole('button', { name: /Exit confirm/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /બહાર નીકળવાની પુષ્ટિ/ }));
     expect(f.calls.some(c => c.path.endsWith('/dispatch'))).toBe(false);
-    await userEvent.click(screen.getByRole('button', { name: /Exit confirm/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Vehicle exit record નોંધાયો.'));
-    await userEvent.click(screen.getByRole('button', { name: /Gate Pass issue કરો/ }));
-    await userEvent.selectOptions(screen.getByLabelText(/Dispatch માટે paid Lot/), 'l1');
-    await userEvent.type(screen.getByLabelText(/Deadline override reason/), 'ok');
+    await userEvent.click(screen.getByRole('button', { name: /બહાર નીકળવાની પુષ્ટિ/ }));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('વાહન બહાર નીકળવાનો રેકોર્ડ નોંધાયો.'));
+    await userEvent.click(screen.getByRole('button', { name: /ગેટ પાસ જારી કરો/ }));
+    await userEvent.selectOptions(screen.getByLabelText(/રવાનગી માટે ચુકવાયેલ લોટ/), 'l1');
+    await userEvent.type(screen.getByLabelText(/સમયમર્યાદા ઓવરરાઇડનું કારણ/), 'ok');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
     await waitFor(() => expect(f.calls.some(c => c.path === '/yard/gate-passes/l1/issue')).toBe(true));
     expect(f.calls.find(c => c.path === '/yard/gate-passes/l1/issue').body).toEqual({ overrideReason: 'ok' });
@@ -217,14 +219,14 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const notify = vi.fn();
     render(<ModuleScreen page="gatepass" user={admin} notify={notify}/>);
-    await userEvent.click(await screen.findByRole('button', { name: /Exit confirm/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Issued gate pass not found', 'error'));
+    await userEvent.click(await screen.findByRole('button', { name: /બહાર નીકળવાની પુષ્ટિ/ }));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith(translateServerMessage('Issued gate pass not found'), 'error'));
   });
   it('gate pass: Pass opens the printable pass', async () => {
     mockFetch({ 'GET /yard/gate-passes?page=1&limit=25': { items: [{ _id: 'p1', passNumber: 'GP-1', status: 'dispatched', lot: {} }], total: 1 }, 'GET /yard/lots?status=paid&limit=100': { items: [] } });
     render(<ModuleScreen page="gatepass" user={admin} notify={() => {}}/>);
-    await userEvent.click(await screen.findByRole('button', { name: 'Pass' }));
-    expect(await screen.findByText('Gate pass · GP-1')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'પાસ' }));
+    expect(await screen.findByText('ગેટ પાસ · GP-1')).toBeInTheDocument();
   });
   const complaint = { _id: 'c1', complaintNumber: 'CMP-1', complainant: 'Ram', type: 'Weight', status: 'open', details: 'detail text here' };
   const cRoutes = (o = {}) => ({ 'GET /yard/complaints?page=1&limit=25': { items: [complaint], total: 1 }, 'GET /yard/lots?limit=100': { items: [] }, ...o });
@@ -232,7 +234,7 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const f = mockFetch(cRoutes({ 'PATCH /yard/complaints/c1': { item: {} } }));
     const notify = vi.fn();
     const { unmount } = render(<ModuleScreen page="disputes" user={admin} notify={notify}/>);
-    await userEvent.click(await screen.findByRole('button', { name: /Review/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /સમીક્ષા/ }));
     await waitFor(() => expect(f.calls.find(c => c.method === 'PATCH').body).toEqual({ status: 'investigating' }));
     unmount();
     f.calls.length = 0;
@@ -240,7 +242,7 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const prompt = vi.spyOn(window, 'prompt').mockReturnValueOnce('').mockReturnValueOnce('ab').mockReturnValue('fixed after check');
     const g = fetch;
     render(<ModuleScreen page="disputes" user={admin} notify={notify}/>);
-    const btn = async () => userEvent.click(await screen.findByRole('button', { name: /Review/ }));
+    const btn = async () => userEvent.click(await screen.findByRole('button', { name: /સમીક્ષા/ }));
     await btn(); await btn();
     expect(g.mock.calls.some(c => c[1]?.method === 'PATCH')).toBe(false);
     await btn();
@@ -249,8 +251,8 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
   it('complaints: non-reviewer roles see a read-only detail modal', async () => {
     mockFetch(cRoutes());
     render(<ModuleScreen page="disputes" user={{ ...admin, role: 'gate' }} notify={() => {}}/>);
-    await userEvent.click(await screen.findByRole('button', { name: /Review/ }));
-    expect(await screen.findByText('Complaint case · CMP-1')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: /સમીક્ષા/ }));
+    expect(await screen.findByText('ફરિયાદ કેસ · CMP-1')).toBeInTheDocument();
   });
   it('complaints: anyone can file one', async () => {
     const f = mockFetch(cRoutes({ 'POST /yard/complaints': { item: {} } }));
@@ -267,16 +269,16 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const f = mockFetch({ 'GET /yard/buyers?page=1&limit=25': { items: [buyer, { ...buyer, _id: 'b2', name: 'Held', ledger: { ...buyer.ledger, overdueCount: 2 } }, { ...buyer, _id: 'b3', name: 'Full', ledger: { ...buyer.ledger, limitFull: true } }], total: 3 }, 'POST /yard/buyers': { item: {} }, 'PATCH /yard/buyers/b1': { item: {} } });
     const notify = vi.fn();
     render(<ModuleScreen page="buyerledger" user={admin} notify={notify}/>);
-    await screen.findByText('Within limit');
-    expect(screen.getByText('2 overdue')).toBeInTheDocument();
-    expect(screen.getByText('Limit full')).toBeInTheDocument();
+    await screen.findByText('મર્યાદામાં');
+    expect(screen.getByText('2 મુદત વીતી')).toBeInTheDocument();
+    expect(screen.getByText('મર્યાદા પૂર્ણ')).toBeInTheDocument();
     expect(screen.getAllByText('TR-1', { selector: 'td' })).toHaveLength(3);  // registrationNo is not a date
-    await userEvent.click(screen.getAllByRole('button', { name: /Edit credit/ })[0]);
-    const days = screen.getByLabelText(/Credit days/);
+    await userEvent.click(screen.getAllByRole('button', { name: /ક્રેડિટ સુધારો/ })[0]);
+    const days = screen.getByLabelText(/ક્રેડિટ દિવસો/);
     expect(days).toHaveValue(3);
     await userEvent.clear(days); await userEvent.type(days, '7');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('વેપારીની વિગતો update થઈ.'));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('વેપારીની વિગતો અપડેટ થઈ.'));
     expect(f.calls.find(c => c.method === 'PATCH').body).toMatchObject({ creditDays: '7', name: 'Patel' });
     await userEvent.click(screen.getByRole('button', { name: /નવો વેપારી/ }));
     expect(screen.getByLabelText(/વેપારીનું નામ/)).toHaveValue('');
@@ -286,12 +288,12 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const f = mockFetch({ 'GET /yard/users?page=1&limit=25': { items: users, total: 2 }, 'PATCH /yard/users/u2': { item: {} } });
     const notify = vi.fn();
     render(<ModuleScreen page="users" user={admin} notify={notify}/>);
-    const buttons = await screen.findAllByRole('button', { name: /Edit role/ });
+    const buttons = await screen.findAllByRole('button', { name: /ભૂમિકા \/ પહોંચ સુધારો/ });
     await userEvent.click(buttons[0]);
-    expect(notify).toHaveBeenCalledWith('તમારા પોતાના account ની role/status બદલી શકાતી નથી.', 'error');
+    expect(notify).toHaveBeenCalledWith('તમારા પોતાના એકાઉન્ટની ભૂમિકા/સ્થિતિ બદલી શકાતી નથી.', 'error');
     await userEvent.click(buttons[1]);
-    await userEvent.selectOptions(screen.getByLabelText(/Assigned role/), 'accounts');
-    await userEvent.selectOptions(screen.getByLabelText(/Account status/), 'false');
+    await userEvent.selectOptions(screen.getByLabelText(/સોંપેલ ભૂમિકા/), 'accounts');
+    await userEvent.selectOptions(screen.getByLabelText(/એકાઉન્ટ સ્થિતિ/), 'false');
     await userEvent.click(screen.getByRole('button', { name: /સાચવો/ }));
     await waitFor(() => expect(f.calls.some(c => c.method === 'PATCH')).toBe(true));
     expect(f.calls.find(c => c.method === 'PATCH').body).toMatchObject({ role: 'accounts', active: 'false' });
@@ -304,7 +306,7 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     render(<ModuleScreen page="audit" user={admin} notify={notify}/>);
     await screen.findByText('A');
     await userEvent.click(screen.getByRole('button', { name: /CSV/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('CSV export તૈયાર છે (2 records).'));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('CSV નિકાસ તૈયાર છે (2 રેકોર્ડ).'));
     expect(click).toHaveBeenCalled();
     expect(f.calls.filter(c => c.path.includes('limit=100'))).toHaveLength(2);
   });
@@ -320,7 +322,7 @@ describe('ModuleScreen – weighment, payments, gate pass, complaints, buyers, u
     const f = mockFetch({ 'GET /yard/audit?page=1&limit=25': { items: [], total: 0 } });
     render(<ModuleScreen page="audit" user={admin} notify={() => {}}/>);
     await screen.findByText('કોઈ રેકોર્ડ મળ્યો નથી.');
-    await userEvent.click(screen.getByRole('button', { name: /Refresh/ }));
+    await userEvent.click(screen.getByRole('button', { name: /રિફ્રેશ/ }));
     await waitFor(() => expect(f.calls).toHaveLength(2));
   });
 });

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { roles } from './roles.js';
 import { navigation } from './navigation.js';
-import { pageConfig } from './pageConfig.js';
+import { pageConfig, columnsFor } from './pageConfig.js';
+import { t } from '../i18n/index.js';
 
 const ROLE_KEYS = ['admin', 'gate', 'auction', 'weighment', 'accounts', 'inspector'];
 
@@ -50,12 +51,15 @@ describe('pageConfig', () => {
   it('has well-formed endpoint, title and columns', () => {
     for (const [id, cfg] of Object.entries(pageConfig)) {
       expect(cfg.endpoint, id).toMatch(/^\/yard\/[a-z-]+$/);
-      expect(cfg.title && cfg.subtitle, id).toBeTruthy();
+      expect(cfg.titleKey && cfg.subtitleKey, id).toBeTruthy();
+      expect(t(cfg.titleKey) !== cfg.titleKey && t(cfg.subtitleKey) !== cfg.subtitleKey, id + ' title/subtitle keys resolve').toBe(true);
       expect(cfg.columns.length, id).toBeGreaterThan(0);
       const keys = cfg.columns.map(c => c[0]);
       expect(new Set(keys).size, id + ' duplicate column keys').toBe(keys.length);
-      for (const c of cfg.columns) { expect(c).toHaveLength(2); expect(c[0] && c[1]).toBeTruthy(); }
-      if (cfg.createLabel) { expect(cfg.createRoles.length, id).toBeGreaterThan(0); for (const r of cfg.createRoles) expect(ROLE_KEYS).toContain(r); }
+      for (const c of cfg.columns) { expect(c).toHaveLength(2); expect(c[0] && c[1]).toBeTruthy(); expect(t(c[1]) !== c[1], `${id}.${c[0]} label key resolves`).toBe(true); }
+      expect(columnsFor(id).map(c => c[0])).toEqual(keys);
+      if (cfg.createLabelKey) {
+        expect(t(cfg.createLabelKey) !== cfg.createLabelKey, id + ' create label resolves').toBe(true); expect(cfg.createRoles.length, id).toBeGreaterThan(0); for (const r of cfg.createRoles) expect(ROLE_KEYS).toContain(r); }
     }
   });
   it('create roles are a subset of roles allowed to see the module', () => {

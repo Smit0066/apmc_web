@@ -4,7 +4,7 @@ import { labelFor, getPath, textValue, money, number, dateTime } from './format.
 afterEach(() => vi.useRealTimers());
 
 describe('labelFor', () => {
-  it.each([['arrived','આવક નોંધાઈ'],['paid','ચુકવણી પૂર્ણ'],['dispatched','માલ રવાના'],['open','ખુલ્લી'],['farmer_settlement','ખેડૂત ચુકવણી'],['e_auction','e-Auction'],['admin','Administrator'],['inspector','Inspector']])('maps %s', (k, v) => expect(labelFor(k)).toBe(v));
+  it.each([['arrived','આવક નોંધાઈ'],['paid','ચુકવણી પૂર્ણ'],['dispatched','માલ રવાના'],['open','ખુલ્લી'],['farmer_settlement','ખેડૂત ચુકવણી'],['e_auction','ઈ-હરાજી'],['admin','પ્રશાસક'],['inspector','નિરીક્ષક']])('maps %s', (k, v) => expect(labelFor(k)).toBe(v));
   it('falls back to the raw value, or a dash for null/undefined', () => {
     expect(labelFor('weird')).toBe('weird');
     expect(labelFor(null)).toBe('—');
@@ -46,8 +46,8 @@ describe('textValue', () => {
     expect(textValue('paid', 'status')).toBe('ચુકવણી પૂર્ણ');
     expect(textValue('open', 'status')).toBe('ખુલ્લી');
     expect(textValue('farmer_settlement', 'type')).toBe('ખેડૂત ચુકવણી');
-    expect(textValue('admin', 'role')).toBe('Administrator');
-    expect(textValue('e_auction', 'method')).toBe('e-Auction');
+    expect(textValue('admin', 'role')).toBe('પ્રશાસક');
+    expect(textValue('e_auction', 'method')).toBe('ઈ-હરાજી');
   });
   it('does not treat unrelated keys containing "at" as dates', () => {
     expect(textValue('GJ-REG-1', 'registrationNo')).toBe('GJ-REG-1');

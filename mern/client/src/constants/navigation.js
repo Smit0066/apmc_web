@@ -1,18 +1,27 @@
 import { Activity, CircleHelp, DoorOpen, Gavel, LayoutDashboard, ReceiptText, Scale, Settings, Users, Wallet, FileBarChart, Truck, UserCog } from 'lucide-react';
 import { roles } from './roles.js';
+import { t } from '../i18n/index.js';
+
+const ALL = Object.keys(roles);
+// `label` / `sub` are getters resolved through the translation catalogue at access time (never at import time).
+const item = (id, icon, itemRoles) => ({
+  id, icon, roles: itemRoles,
+  get label() { return t('nav.item.' + id); },
+  get sub() { return t('nav.item.' + id + '.sub'); }
+});
 
 export const navigation = [
-  { id: 'dashboard', label: 'ડેશબોર્ડ', sub: 'Dashboard', icon: LayoutDashboard, roles: Object.keys(roles) },
-  { id: 'gate', label: 'ગેટ એન્ટ્રી', sub: 'Gate Entry', icon: DoorOpen, roles: ['admin','gate','auction','weighment','accounts','inspector'] },
-  { id: 'auction', label: 'હરાજી / ભાવ-કાપલી', sub: 'Auction & Tickets', icon: Gavel, roles: ['admin','auction','accounts','inspector'] },
-  { id: 'weighment', label: 'વજન કાંટો', sub: 'Weighment', icon: Scale, roles: ['admin','weighment','accounts','inspector'] },
-  { id: 'sales', label: 'વેચાણ બિલ', sub: 'Sale Bills', icon: ReceiptText, roles: ['admin','accounts','inspector'] },
-  { id: 'payments', label: 'ચુકવણી', sub: 'Payments & Settlement', icon: Wallet, roles: ['admin','accounts'] },
-  { id: 'buyerledger', label: 'વેપારી ખાતું', sub: 'Buyer Ledger & Credit', icon: Users, roles: ['admin','accounts'] },
-  { id: 'gatepass', label: 'ગેટ પાસ / નિકાલ', sub: 'Gate Pass & Dispatch', icon: Truck, roles: ['admin','gate','inspector'] },
-  { id: 'disputes', label: 'ફરિયાદ / વિવાદ', sub: 'Complaints', icon: CircleHelp, roles: Object.keys(roles) },
-  { id: 'reports', label: 'રિપોર્ટ્સ', sub: 'Reports & MIS', icon: FileBarChart, roles: Object.keys(roles) },
-  { id: 'audit', label: 'ઓડિટ ટ્રેલ', sub: 'Audit Trail', icon: Activity, roles: ['admin','inspector'] },
-  { id: 'users', label: 'સ્ટાફ / યુઝર્સ', sub: 'Staff & Roles', icon: UserCog, roles: ['admin'] },
-  { id: 'settings', label: 'સેટિંગ્સ', sub: 'Yard Settings', icon: Settings, roles: ['admin'] }
+  item('dashboard', LayoutDashboard, ALL),
+  item('gate', DoorOpen, ['admin','gate','auction','weighment','accounts','inspector']),
+  item('auction', Gavel, ['admin','auction','accounts','inspector']),
+  item('weighment', Scale, ['admin','weighment','accounts','inspector']),
+  item('sales', ReceiptText, ['admin','accounts','inspector']),
+  item('payments', Wallet, ['admin','accounts']),
+  item('buyerledger', Users, ['admin','accounts']),
+  item('gatepass', Truck, ['admin','gate','inspector']),
+  item('disputes', CircleHelp, ALL),
+  item('reports', FileBarChart, ALL),
+  item('audit', Activity, ['admin','inspector']),
+  item('users', UserCog, ['admin']),
+  item('settings', Settings, ['admin'])
 ];

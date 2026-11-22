@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { api, downloadFile, getSession, setSession, clearSession } from './api.js';
 import { mockFetch, jsonResponse } from '../test/mockFetch.js';
+import { setLanguage } from '../i18n/index.js';
 
-beforeEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+// These tests assert the server's English text, so they run in English; translation is covered in apiI18n.test.js.
+beforeEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); setLanguage('en'); });
+afterEach(() => setLanguage('gu'));
 
 describe('session helpers', () => {
   it('round-trips and clears', () => {

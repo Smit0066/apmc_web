@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsScreen } from './SettingsScreen.jsx';
 import { mockFetch } from '../../test/mockFetch.js';
+import { translateServerMessage } from '../../i18n/index.js';
 
 afterEach(() => vi.unstubAllGlobals());
 const item = { committeeName: 'Surat APMC', yardCode: 'APMC-01', timezone: 'Asia/Kolkata', ticketPrefix: 'APMC', billPrefix: 'SB', passPrefix: 'GP', complaintPrefix: 'CMP', farmerPaymentDays: 1, dispatchDays: 2, defaultBuyerCreditDays: 5, sellerApprovedDeduction: 0, buyerMarketFee: 0, buyerOtherDues: 0, commodities: ['ઘઉં', 'કપાસ'] };
@@ -12,9 +13,9 @@ describe('SettingsScreen', () => {
   it('shows loading then the form populated from the server', async () => {
     mockFetch(base());
     render(<SettingsScreen notify={() => {}}/>);
-    expect(screen.getByText(/Settings લાવી રહ્યા/)).toBeInTheDocument();
+    expect(screen.getByText(/સેટિંગ્સ લાવી રહ્યા/)).toBeInTheDocument();
     expect(await screen.findByDisplayValue('Surat APMC')).toBeInTheDocument();
-    expect(screen.getByLabelText('દરેક line માં એક પાકનું નામ')).toHaveValue('ઘઉં\nકપાસ');
+    expect(screen.getByLabelText('દરેક લીટીમાં એક પાકનું નામ')).toHaveValue('ઘઉં\nકપાસ');
     expect(screen.getByDisplayValue('APMC-01')).toBeInTheDocument();
   });
   it('lists buyers with limit / not-set / active flags', async () => {
@@ -22,7 +23,7 @@ describe('SettingsScreen', () => {
     render(<SettingsScreen notify={() => {}}/>);
     expect(await screen.findByText('Patel')).toBeInTheDocument();
     expect(screen.getByText('₹5,000.00')).toBeInTheDocument();
-    expect(screen.getByText('Open / not set')).toBeInTheDocument();
+    expect(screen.getByText('ખુલ્લી / નક્કી નથી')).toBeInTheDocument();
     expect(screen.getByText('3 દિવસ')).toBeInTheDocument();
   });
   it('shows an empty buyer table', async () => {
@@ -34,18 +35,18 @@ describe('SettingsScreen', () => {
     mockFetch(base({ 'GET /yard/settings': { status: 500, body: { message: 'cannot load' } } }));
     render(<SettingsScreen notify={() => {}}/>);
     expect(await screen.findByText('cannot load')).toBeInTheDocument();
-    expect(screen.queryByText('Save configuration')).toBeNull();
+    expect(screen.queryByText('ગોઠવણી સાચવો')).toBeNull();
   });
   it('saves edited values with numeric coercion and a parsed commodity list, then reloads and notifies', async () => {
     const f = mockFetch(base({ 'PATCH /yard/settings': { item } }));
     const notify = vi.fn();
     render(<SettingsScreen notify={notify}/>);
-    const days = await screen.findByLabelText('Farmer payment days');
+    const days = await screen.findByLabelText('ખેડૂત ચુકવણીના દિવસો');
     await userEvent.clear(days); await userEvent.type(days, '4');
-    const ta = screen.getByLabelText('દરેક line માં એક પાકનું નામ');
+    const ta = screen.getByLabelText('દરેક લીટીમાં એક પાકનું નામ');
     await userEvent.clear(ta); await userEvent.type(ta, 'ઘઉં,  જીરું{enter}{enter}મગફળી');
-    await userEvent.click(screen.getByRole('button', { name: /Save configuration/ }));
-    await waitFor(() => expect(notify).toHaveBeenCalledWith('Yard settings સાચવાઈ.'));
+    await userEvent.click(screen.getByRole('button', { name: /ગોઠવણી સાચવો/ }));
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('યાર્ડ સેટિંગ્સ સાચવાઈ.'));
     const patch = f.calls.find(c => c.method === 'PATCH');
     expect(patch.body.farmerPaymentDays).toBe(4);
     expect(typeof patch.body.buyerMarketFee).toBe('number');
@@ -57,22 +58,22 @@ describe('SettingsScreen', () => {
     const notify = vi.fn();
     render(<SettingsScreen notify={notify}/>);
     await screen.findByDisplayValue('Surat APMC');
-    await userEvent.click(screen.getByRole('button', { name: /Save configuration/ }));
-    expect(await screen.findByText('At least one valid commodity is required')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /ગોઠવણી સાચવો/ }));
+    expect(await screen.findByText(translateServerMessage('At least one valid commodity is required'))).toBeInTheDocument();
     expect(notify).not.toHaveBeenCalled();
   });
   it('navigates to the buyer ledger', async () => {
     mockFetch(base());
     const onNavigate = vi.fn();
     render(<SettingsScreen notify={() => {}} onNavigate={onNavigate}/>);
-    await userEvent.click(await screen.findByRole('button', { name: /વેપારી ખાતું અને credit/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /વેપારી ખાતું અને ક્રેડિટ/ }));
     expect(onNavigate).toHaveBeenCalledWith('buyerledger');
   });
   it('refresh reloads the settings', async () => {
     const f = mockFetch(base());
     render(<SettingsScreen notify={() => {}}/>);
     await screen.findByDisplayValue('Surat APMC');
-    await userEvent.click(screen.getByRole('button', { name: /Refresh/ }));
+    await userEvent.click(screen.getByRole('button', { name: /રિફ્રેશ/ }));
     await waitFor(() => expect(f.calls.filter(c => c.path === '/yard/settings')).toHaveLength(2));
   });
 });

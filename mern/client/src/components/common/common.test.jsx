@@ -80,7 +80,7 @@ describe('Modal', () => {
     expect(onClose).not.toHaveBeenCalled();
     fireEvent.mouseDown(container.querySelector('.modal-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(1);
-    await userEvent.click(screen.getByLabelText('Close'));
+    await userEvent.click(screen.getByLabelText('બંધ કરો'));
     expect(onClose).toHaveBeenCalledTimes(2);
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(3);
@@ -163,7 +163,7 @@ describe('ErrorBoundary', () => {
   it('shows an alert fallback and logs when a child crashes', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(<ErrorBoundary><Boom/></ErrorBoundary>);
-    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
+    expect(screen.getByRole('alert')).toHaveTextContent('કંઈક ખોટું થયું');
     expect(err.mock.calls.some(c => String(c[0]).includes('[apmc] Unhandled UI error'))).toBe(true);
   });
 });
@@ -187,7 +187,7 @@ describe('SearchModal', () => {
   it('shows an empty state when nothing matches', async () => {
     mockFetch({ 'GET /yard/search?q=zz': { lots: [], tickets: [] } });
     render(<SearchModal query="zz" onClose={() => {}} onOpenLot={() => {}} onOpenTicket={() => {}}/>);
-    expect(await screen.findByText('કોઈ matching record નથી')).toBeInTheDocument();
+    expect(await screen.findByText('કોઈ મળતો રેકોર્ડ નથી')).toBeInTheDocument();
   });
   it('shows server errors', async () => {
     mockFetch({ 'GET /yard/search?q=zz': { status: 500, body: { message: 'Search broke' } } });
@@ -199,7 +199,7 @@ describe('SearchModal', () => {
     const { rerender } = render(<SearchModal query="aa" onClose={() => {}} onOpenLot={() => {}} onOpenTicket={() => {}}/>);
     await screen.findByText('LOT-1');
     rerender(<SearchModal query="bb" onClose={() => {}} onOpenLot={() => {}} onOpenTicket={() => {}}/>);
-    await screen.findByText('કોઈ matching record નથી');
+    await screen.findByText('કોઈ મળતો રેકોર્ડ નથી');
     expect(f.calls.map(c => c.path)).toEqual(['/yard/search?q=aa', '/yard/search?q=bb']);
   });
 });
@@ -217,11 +217,11 @@ describe('TicketPrint', () => {
     window.QRCode = vi.fn(function () {}); window.QRCode.CorrectLevel = { M: 1 };
     const { container } = render(<TicketPrint ticket={ticket}/>);
     expect(screen.getAllByText('APMC-2026-000001')).toHaveLength(3);
-    expect(screen.getByText(/FARMER COPY/)).toBeInTheDocument();
-    expect(screen.getByText(/BUYER COPY/)).toBeInTheDocument();
-    expect(screen.getByText(/YARD COPY/)).toBeInTheDocument();
+    expect(screen.getByText(/વેચનાર નકલ/)).toBeInTheDocument();
+    expect(screen.getByText(/ખરીદદાર નકલ/)).toBeInTheDocument();
+    expect(screen.getByText(/યાર્ડ નકલ/)).toBeInTheDocument();
     expect(screen.getAllByText('₹37,500.00')).toHaveLength(3);
-    expect(screen.getAllByText('Farmer ID: FR1 · 7/12: 55')).toHaveLength(3);
+    expect(screen.getAllByText('ખેડૂત ID: FR1 · 7/12: 55')).toHaveLength(3);
     await waitFor(() => expect(screen.getAllByText(/Surat APMC/)).toHaveLength(3));
     await waitFor(() => expect(window.QRCode).toHaveBeenCalledTimes(3));
     expect(window.QRCode.mock.calls[0][1].text).toBe('APMC-2026-000001|LOT-1|2500');
@@ -231,9 +231,9 @@ describe('TicketPrint', () => {
     mockFetch({ 'GET /yard/settings': { status: 500, body: { message: 'x' } } });
     window.QRCode = vi.fn(function () {}); window.QRCode.CorrectLevel = { M: 1 };
     render(<TicketPrint ticket={{ ...ticket, lot: { ...ticket.lot, sellerType: 'trader', traderRegistrationNo: 'TRD-9' } }}/>);
-    expect(screen.getAllByText('Trader Registration: TRD-9')).toHaveLength(3);
+    expect(screen.getAllByText('વેપારી નોંધણી: TRD-9')).toHaveLength(3);
     await waitFor(() => expect(window.QRCode).toHaveBeenCalled());
-    expect(screen.getAllByText(/APMC Market Yard/).length).toBe(3);
+    expect(screen.getAllByText(/APMC માર્કેટ યાર્ડ/).length).toBe(3);
   });
   it('handles missing optional data with dashes and keeps the QR placeholder if QR lib throws', async () => {
     mockFetch({ 'GET /yard/settings': { item: {} } });
@@ -247,7 +247,7 @@ describe('TicketPrint', () => {
     window.QRCode = vi.fn(function () {}); window.QRCode.CorrectLevel = { M: 1 };
     window.print = vi.fn();
     render(<TicketPrint ticket={ticket}/>);
-    await userEvent.click(screen.getByRole('button', { name: /Print/ }));
+    await userEvent.click(screen.getByRole('button', { name: /પ્રિન્ટ/ }));
     expect(window.print).toHaveBeenCalled();
   });
 });
@@ -266,7 +266,7 @@ describe('GatePassPrint', () => {
   it('prints', async () => {
     window.print = vi.fn();
     render(<GatePassPrint pass={pass}/>);
-    await userEvent.click(screen.getByRole('button', { name: /Print/ }));
+    await userEvent.click(screen.getByRole('button', { name: /પ્રિન્ટ/ }));
     expect(window.print).toHaveBeenCalled();
   });
 });
