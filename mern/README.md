@@ -53,3 +53,32 @@ Multi-document operations use MongoDB transactions; use MongoDB Atlas or another
 
 ## Migration status
 This is an actively built migration workspace, not yet a certified production release. Every workflow must be tested against the APMC's actual forms, approved bye-laws, fee rules, statutory processes, and hardware. The source of truth for current workflows is being migrated from the legacy demo; demo records are not imported automatically.
+
+## Project structure
+
+```
+server/src
+  index.js              process entry: env, DB connect, listen, crash handlers
+  app.js                Express app factory (middleware + route mounting)
+  config/               env.js (single source of env vars), db.js
+  routes/               URL + role-guard wiring only (auth, health, yard)
+  controllers/          HTTP layer: parse request, call service/model, send response
+  services/             business flows and shared infra (tickets, weighment, payments,
+                        gate passes, audit, counters, yard config, transactions)
+  domain/               pure business rules (yardRules.js, unit tested)
+  models/               one Mongoose model per file, models/index.js re-exports
+  middleware/           auth (JWT + allowRoles), errorHandler/notFound
+  utils/                logger (structured, redacting), httpError, asyncHandler, pagination, dates, validation
+  scripts/              seedAdmin.js
+client/src
+  main.jsx, App.jsx     bootstrap + session gate
+  layouts/              Workspace (shell, navigation)
+  features/             auth, dashboard, yard (module screens), settings, reports
+  components/common/    reusable UI (Modal, FormDialog, DataTable, StatCard, ErrorBoundary)
+  constants/            roles, navigation, pageConfig
+  services/api.js       fetch wrapper + session storage
+  utils/                format, csv, logger
+```
+
+Logging: server logs are JSON lines in production (`LOG_LEVEL` controls verbosity) and
+passwords, tokens and authorization headers are redacted. Request bodies are never logged.
